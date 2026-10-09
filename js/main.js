@@ -23,7 +23,7 @@ const Game = {
 (async function boot() {
   // Scene text is drawn in pixel fonts; wait for them (but not forever).
   await Promise.race([
-    Promise.all(['8px "Press Start 2P"', '16px "Press Start 2P"', '20px Workbench'].map(f => document.fonts.load(f))),
+    Promise.all(['8px "Press Start 2P"', '16px "Press Start 2P"', '20px DotGothic16'].map(f => document.fonts.load(f))),
     new Promise(r => setTimeout(r, 3000)),
   ]).catch(() => {});
   Save.migrate();

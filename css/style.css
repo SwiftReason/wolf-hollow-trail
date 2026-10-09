@@ -11,11 +11,9 @@
   unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
   font-display: block;
 }
-/* Workbench is a variable font with a SCAN axis that draws CRT scanlines
-   through the letters; SCAN 50 fills them in so text stays solid. */
 @font-face {
-  font-family: 'Workbench';
-  src: url(../fonts/Workbench-latin.woff2) format('woff2');
+  font-family: 'DotGothic16';
+  src: url(../fonts/DotGothic16-latin.woff2) format('woff2');
   font-display: block;
 }
 
@@ -32,7 +30,7 @@
   --dim: #8e9ac2;
   --edge: #e8eaf4;
   --ink: #0a0e1c;
-  /* 40 columns of Workbench (0.5em wide) across the window's inner width */
+  /* 40 columns of DotGothic16 (0.5em wide) across the window's inner width */
   --fs: calc((var(--game-w) - 34px) / 20);
 }
 
@@ -47,8 +45,7 @@ html, body {
 
 body {
   color: var(--text);
-  font-family: 'Workbench', ui-monospace, 'Courier New', monospace;
-  font-variation-settings: 'SCAN' 50;
+  font-family: 'DotGothic16', ui-monospace, 'Courier New', monospace;
   display: flex;
   justify-content: center;
   padding-block: 12px 32px;
@@ -153,7 +150,6 @@ input.tin {
   padding: 0 2px;
   color: var(--text);
   font: inherit;
-  font-variation-settings: inherit;
   text-shadow: inherit;
   caret-color: var(--hi);
 }

@@ -191,8 +191,9 @@ const Trail = {
 
     ctx.drawImage(Trail.sky(sky), 0, 0);
 
-    // Sun, clouds
-    if (sky === 'clear' || sky === 'hot' || sky === 'cold') {
+    // Sun, clouds (the sun sets at night; the moon is drawn with the night wash)
+    const L = Trail.light(G);
+    if ((sky === 'clear' || sky === 'hot' || sky === 'cold') && L.night < 0.35) {
       const big = sky === 'hot';
       if (big) {
         Gfx.disc(ctx, 263, 23, 17, Gfx.mix('#fff6cc', Trail.SKIES.hot[0][1], 0.55));
@@ -277,7 +278,6 @@ const Trail = {
     Sprites.utv(ctx, X, Y, { t, moving, cargo: true });
 
     // Dusk and night wash over everything; then the lights that cut through it.
-    const L = Trail.light(G);
     if (L.dusk > 0.01) {
       ctx.fillStyle = `rgba(255,110,50,${(0.2 * L.dusk).toFixed(3)})`;
       ctx.fillRect(0, 0, 320, 160);
