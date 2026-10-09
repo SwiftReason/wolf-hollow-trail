@@ -59,19 +59,33 @@ const Score = {
     return 'won';
   },
 
-  // After the end: read the journal or save a score card picture.
+  // After the end: read the journal or look at the score card.
   async after(G, won) {
     while (true) {
       const k = await UI.menu(UI.hi(UI.center(won ? 'THE END' : 'GAME OVER')) + '\n', [
         { k: '1', label: 'Read the trail journal' },
-        { k: '2', label: 'Save a score card picture' },
+        { k: '2', label: 'Show the score card' },
         { k: '0', label: 'Return to the title screen' },
       ]);
       if (k === '1') await Travel.journal(G);
-      else if (k === '2') {
-        const ok = Score.download(G, won);
-        await UI.pause(UI.t(ok ? 'Saved wolf-hollow-trail.png to your downloads.' : 'Your browser would not save the picture.'));
-      } else return;
+      else if (k === '2') await Score.showCard(G, won);
+      else return;
+    }
+  },
+
+  // The card shows on screen so it can be saved anywhere (right-click or
+  // long-press). Pages hosted inside a frame can't start downloads, so the
+  // direct download is only offered when the game runs on its own.
+  async showCard(G, won) {
+    const src = Score.card(G, won).toDataURL('image/png');
+    const standalone = window.self === window.top;
+    const body = `<img class="card" src="${src}" alt="Wolf Hollow Trail score card">` + '\n' +
+      UI.t('Right-click or long-press the picture to save it.') + '\n';
+    const opts = standalone ? [{ k: 'D', label: 'Download it' }, { k: '0', label: 'Back' }] : [{ k: '0', label: 'Back' }];
+    const k = await UI.menu(body, opts, 'Choice?');
+    if (k === 'D') {
+      const ok = Score.download(G, won);
+      await UI.pause(UI.t(ok ? 'Saved wolf-hollow-trail.png to your downloads.' : 'Your browser would not save the picture.'));
     }
   },
 

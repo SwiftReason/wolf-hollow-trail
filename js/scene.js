@@ -30,8 +30,8 @@ const Scene = {
   // scales, so snap to 2x or 3x when there's room.
   layout() {
     const vw = window.innerWidth, vh = window.innerHeight;
-    const stacked = Math.min(vw - 24, 960, (vh - 106) / 1.6);
-    const side = Math.min((vw - 40) / 2, (vh - 70) / 1.05, 800);
+    const stacked = Math.min(vw - 32, 960, (vh - 106) / 1.6);
+    const side = Math.min((vw - 48) / 2, (vh - 70) / 1.05, 800);
     const useSide = side > stacked * 1.15;
     let s = Math.max(300, useSide ? side : stacked) / 320;
     if (s >= 2.85) s = 3; else if (s >= 1.85) s = 2;

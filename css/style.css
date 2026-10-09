@@ -17,8 +17,10 @@
   font-display: block;
 }
 
-/* 16-bit look: a pixel-art scene on top, an SNES-style text window below. */
+/* 16-bit look: a pixel-art scene on top, an SNES-style text window below.
+   One deliberate dark look, whatever the host theme. */
 :root {
+  color-scheme: dark;
   --game-w: 640px;                 /* set by Scene.layout() */
   --bg: #0c1020;
   --win-top: #2b4c92;
@@ -46,7 +48,8 @@ body {
   font-family: 'Workbench', ui-monospace, 'Courier New', monospace;
   display: flex;
   justify-content: center;
-  padding: 12px 12px 32px;
+  padding-block: 12px 32px;
+  padding-inline: 16px;
 }
 
 #game {
@@ -123,6 +126,21 @@ body {
 
 .blink { animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+
+img.card {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  image-rendering: pixelated;
+  border: 2px solid var(--edge);
+  border-radius: 4px;
+}
+
+.opt:focus-visible, input.tin:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .blink { animation: none; }
+}
 
 input.tin {
   background: rgba(0, 0, 0, 0.25);
