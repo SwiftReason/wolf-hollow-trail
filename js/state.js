@@ -134,6 +134,7 @@ const Save = {
     const old = Persist.get('wht.save.v1', null);
     if (old && !Persist.get(Save.key(1), null)) Persist.set(Save.key(1), { ...old, slot: 1 });
     Persist.del('wht.save.v1');
+    Persist.del('wht.palette');   // the green/amber screen option is gone
   },
   load(slot) {
     const G = Persist.get(Save.key(slot), null);
