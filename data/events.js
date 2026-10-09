@@ -297,3 +297,24 @@ DATA.events = [
     text: 'Hashrate went up for no reason. Nobody touches anything.',
     effect: { morale: 6, blocks: 3 } },
 ];
+
+// Event pictures (js/paint/vignettes.js). Events without a `pic` get one by type.
+DATA.eventPics = {
+  ailment: 'sick', health: 'sick', fleet: 'smoke', supply: 'pallet',
+  delay: 'clock', morale: 'suits', good: 'coin', difficulty: 'chart',
+};
+// Specific pictures for specific events.
+(function () {
+  const picFor = {
+    rattlesnake: 'snake', fire_ants: 'ants', ants_boards: 'ants', coyote_fiber: 'coyote', coyote_night: 'coyote',
+    contractor_fiber: 'fiber', lightning_substation: 'lightning', grid_blip: 'lightning', firmware_bricked: 'laptop',
+    tank_seal: 'splash', drum_forklift: 'splash', pump_failure: 'splash', wet_boots: 'splash', taco_tank: 'splash',
+    burst_line: 'spray', wrong_valve: 'spray', glycol_rash: 'spray', drip: 'spray',
+    hail_coolers: 'ice', frostbite: 'ice', cold_front: 'ice', dust_filters: 'dust', dust_lung: 'dust',
+    space_heater: 'fire', bay_door: 'heat', heat_exhaustion: 'heat', lost_hot_aisle: 'heat', sunburn: 'heat',
+    raccoon: 'raccoon', kolaches: 'tacos', tacos_eaten: 'tacos', fee_spike: 'coin', demand_response: 'coin',
+    difficulty_up: 'chart', graph_up: 'chart', pallet_psus: 'pallet', drawer_boards: 'pallet', rma_return: 'pallet',
+    corporate_visit: 'suits', influencer: 'camera', pool_outage: 'clock', cage_reorg: 'clock', tinnitus: 'sick',
+  };
+  for (const ev of DATA.events) if (picFor[ev.id] && !ev.pic) ev.pic = picFor[ev.id];
+})();

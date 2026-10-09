@@ -1,12 +1,13 @@
 // Headless balance check. Plays many games with a scripted player and prints
 // win rates, deaths, trip length, and where the score comes from.
 //
-//   node tools/balance.js [role] [startMonth] [strategy] [games]
+//   node tools/balance.js [role] [startMonth] [strategy] [games] [length] [difficulty]
 //   node tools/balance.js tech 5 careful 400
 //   node tools/balance.js all            (every role, June start)
 //
 // role: manager | electrician | maintenance | inventory | tech | all
 // startMonth: 0-11 (5 = June)
+// length: short | normal | long      difficulty: greenhorn | normal | grizzled
 // strategy: careful    stock tuning, 10 hr shifts, rests when sick, safe choices
 //           aggressive overclocked, 12 hr shifts, otherwise careful
 //           hoard      careful, but never buys extra miners (sits on sats)
@@ -23,7 +24,7 @@ global.window = global;
 global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 for (const f of [
   'data/config.js', 'data/roles.js', 'data/store.js', 'data/weather.js', 'data/deaths.js',
-  'data/events.js', 'data/landmarks.js', 'data/crossings.js', 'data/salvage.js',
+  'data/events.js', 'data/choices.js', 'data/landmarks.js', 'data/crossings.js', 'data/salvage.js',
   'js/util.js', 'js/state.js', 'js/sim.js', 'js/engine.js', 'js/decisions.js', 'js/screens/score.js',
 ]) vm.runInThisContext(fs.readFileSync(path.join(root, f), 'utf8'), { filename: f });
 
@@ -37,7 +38,7 @@ for (const f of [
 })(DATA.config, JSON.parse(process.env.CFG || '{}'));
 
 const ROLES = DATA.roles.map(r => r.id);
-const [argRole = 'all', argMonth = '5', strategyArg = 'careful', argGames = '400'] = process.argv.slice(2);
+const [argRole = 'all', argMonth = '5', strategyArg = 'careful', argGames = '400', argLength = 'normal', argDiff = 'normal'] = process.argv.slice(2);
 const [strategy, tuneArg, shiftArg] = strategyArg.split('/');
 const N = parseInt(argGames, 10);
 const reckless = strategy === 'reckless';
@@ -46,7 +47,7 @@ const hoard = strategy === 'hoard';
 
 // ------------------------------------------------------------- the player
 function price(G, id, lm) {
-  return Math.round(DATA.store.items[id].price * ((lm && lm.priceMult) || 1) * Q.perk(G, 'priceMult') / 100) * 100;
+  return Math.round(DATA.store.items[id].price * ((lm && lm.priceMult) || 1) * Q.perk(G, 'priceMult') * Q.diff(G).prices / 100) * 100;
 }
 function buy(G, id, n, lm) {
   const it = DATA.store.items[id], p = price(G, id, lm);
@@ -71,25 +72,26 @@ function shop(G, lm, first) {
   const bpd = Sim.blocksPerDay(G);
   const observed = G.blocks > 50 ? G.day / G.blocks : 0;   // days per block so far, rests included
   const days = b => b * Math.max(1.35 / bpd, observed * 1.15) + 4;
-  const fluid = { dielectric: 0, glycol: 0 };
+  const need = { dielectric: 0, glycol: 0, zipties: 0 };
+  const addNeed = X => { for (const [k, v] of Object.entries(X.need)) need[k] = (need[k] || 0) + v; };
   const here = DATA.crossings[lm.id];   // a crossing at this stop happens after shopping
-  if (here && lm.zone !== G.zone) fluid[here.fluid] += here.fluidNeed;
+  if (here && lm.zone !== G.zone) addNeed(here);
   let zone = lm.zone || G.zone, at = G.blocks;
   for (let i = G.lm; i <= nextIdx; i++) {
-    const z = C.zones[zone];
-    if (z.fluid) fluid[z.fluid] += days(L[i].block - at) * z.use;
+    const z = C.zones[zone], b = Q.landmark(G, i).block;
+    if (z.fluid) need[z.fluid] += days(b - at) * z.use;
     const X = DATA.crossings[L[i].id];
-    if (X && i < nextIdx) fluid[X.fluid] += X.fluidNeed;
+    if (X && i < nextIdx) addNeed(X);
     if (L[i].zone) zone = L[i].zone;
-    at = L[i].block;
+    at = b;
   }
   if (first && !hoard) buy(G, 'miners', Math.floor((G.sats - 3500000) / 400000 * 0.6), lm);
   const alive = Q.alive(G).length;
-  topUp(G, 'food', alive * C.rationsPerPerson * days(L[nextIdx].block - G.blocks), lm);
+  topUp(G, 'food', alive * C.rationsPerPerson * days(Q.landmark(G, nextIdx).block - G.blocks), lm);
   topUp(G, 'ppe', alive, lm);
-  topUp(G, 'zipties', 150, lm);
-  topUp(G, 'dielectric', fluid.dielectric, lm);
-  topUp(G, 'glycol', fluid.glycol, lm);
+  topUp(G, 'zipties', 150 + need.zipties, lm);
+  topUp(G, 'dielectric', need.dielectric, lm);
+  topUp(G, 'glycol', need.glycol, lm);
   for (const [k, t] of [['hashboards', 12], ['psus', 8], ['fans', G.zone === 'air' ? 6 : 0], ['boards', 4], ['hoses', 3]]) topUp(G, k, t, lm);
   if (!reckless && !hoard) buy(G, 'miners', Math.floor((G.sats - 2000000) / 400000 * 0.5), lm);
   Sim.repair(G);
@@ -100,7 +102,10 @@ function runDay(G, opts, st) {
   const r = Sim.day(G, opts);
   st.deaths.push(...r.deaths.map(i => G.crew[i].cause));
   if (r.event) {
-    const o = Engine.apply(G, r.event);
+    // Choice events: pick any option the crew can afford.
+    const ev = r.event.ev;
+    const pick = ev.choices ? U.pick(ev.choices.map((c, i) => i).filter(i => Engine.choiceOk(G, ev.choices[i]))) : null;
+    const o = ev.choices ? Engine.applyChoice(G, r.event, pick) : Engine.apply(G, r.event);
     st.deaths.push(...o.deaths.map(i => G.crew[i].cause));
     for (let d = 0; d < o.days && !Q.over(G); d++) runDay(G, { noProgress: true, noEvents: true }, st);
   }
@@ -113,15 +118,15 @@ function passDays(G, n, st) {
 
 function crossing(G, lm, st) {
   const C = DATA.crossings[lm.id];
-  let base = Decide.crossingRoll(C);
+  let base = Decide.crossingRoll(C, null, G);
   let method;
   for (let waits = 0; ; waits++) {
     const r = Decide.crossingReading(C, G, base);
     const price = Decide.ferryPrice(G, C);
     if (reckless) method = 'ford';
-    else if (G.s[C.fluid] >= C.fluidNeed) method = 'caulk';
+    else if (Decide.canDrain(G, C)) method = 'caulk';
     else if (G.sats >= price + 1000000) method = 'ferry';
-    else if (r.sev > 0.7 && waits < 2) { runDay(G, { noProgress: true }, st); base = Decide.crossingRoll(C, base); continue; }
+    else if (r.sev > 0.7 && waits < 2) { runDay(G, { noProgress: true }, st); base = Decide.crossingRoll(C, base, G); continue; }
     else method = 'ford';
     if (method === 'ferry') {
       G.sats -= price;
@@ -153,7 +158,7 @@ function salvage(G) {
 
 function play(role, month) {
   const crewRoles = [role, ...ROLES.filter(r => r !== role)];
-  const G = newGame({ role, names: ['A', 'B', 'C', 'D', 'E'], roles: crewRoles, month });
+  const G = newGame({ role, names: ['A', 'B', 'C', 'D', 'E'], roles: crewRoles, month, length: argLength, diff: argDiff });
   if (fast) { G.tuning = 'overclocked'; G.shift = 12; }
   const smart = tuneArg === 'smart';
   if (tuneArg && !smart) G.tuning = tuneArg;
@@ -172,7 +177,7 @@ function play(role, month) {
     if (Q.over(G)) { result = Q.alive(G).length ? 'dark' : 'wiped'; break; }
     if (r.arrived) {
       const lm = r.arrived;
-      G.lm = DATA.landmarks.indexOf(lm) + 1;
+      G.lm = lm.index + 1;
       if (lm.type === 'end') { result = 'win'; break; }
       if (lm.type === 'difficulty') G.difficulty *= 1 + U.ri(-3, 9) / 100;
       if (lm.zone && lm.type !== 'crossing') G.zone = lm.zone;
@@ -223,11 +228,12 @@ function report(role, month) {
     }
   }
   const pct = n => `${Math.round(n / N * 100)}%`;
-  console.log(`\n=== ${Q.role(role).name}, start ${DATA.weather.months[month].name}, ${strategyArg}, ${N} games ===`);
+  console.log(`\n=== ${Q.role(role).name}, start ${DATA.weather.months[month].name}, ${strategyArg}, ${argLength}/${argDiff}, ${N} games ===`);
   console.log(`win ${pct(agg.win)}  everyone dead ${pct(agg.wiped)}  hashrate zero ${pct(agg.dark)}  timeout ${pct(agg.timeout)}`);
   console.log(`deaths/game ${(agg.deaths / N).toFixed(2)} (crossings ${(agg.crossingDeaths / N).toFixed(2)})  ` +
     `days/win ${wins ? Math.round(agg.days / wins) : '-'}  ERCOT paid ${pct(agg.ercotPaid)}  salvages/game ${(agg.salvages / N).toFixed(1)}`);
-  console.log(`crossings: ${Object.entries(methods).map(([m, n]) => `${m} ${pct(n / 2)}`).join(', ')}`);
+  const nCross = DATA.landmarks.filter(l => l.type === 'crossing').length;
+  console.log(`crossings (share of all ${nCross}): ${Object.entries(methods).map(([m, n]) => `${m} ${pct(n / nCross)}`).join(', ')}`);
   if (wins) {
     const avg = agg.score / wins;
     console.log(`wins end with: ${Math.round(agg.miners / wins)} miners online, ${(agg.burnouts / wins).toFixed(0)} burned out, ` +

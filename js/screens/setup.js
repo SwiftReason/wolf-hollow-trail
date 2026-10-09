@@ -1,14 +1,26 @@
 // New game: pick your job, name the crew, assign their jobs, pick a month.
 
 const Setup = {
-  async run() {
+  async run(slot) {
     Scene.show('wolf_hollow');
     const role = await Setup.pickRole();
     const me = await UI.ask(UI.t('What is your first name?') + '\n', '>', { max: 10 });
     const names = await Setup.nameCrew(me);
     const roles = await Setup.assignRoles(names, role.id);
     const month = await Setup.pickMonth();
-    return newGame({ role: role.id, names, roles, month });
+    const length = await Setup.pickFrom('How long a trail?', DATA.config.lengths,
+      l => `${l.label} (${U.num(l.blocks)} blocks)`);
+    const diff = await Setup.pickFrom('How hard should Texas be?', DATA.config.difficulties,
+      d => d.score === 1 ? d.label : `${d.label} (x${d.score} score)`);
+    return newGame({ role: role.id, names, roles, month, length, diff, slot });
+  },
+
+  // A menu built from a config table: { id: { label, desc } }. Returns the id.
+  async pickFrom(question, table, label) {
+    const ids = Object.keys(table);
+    const desc = ids.map((id, i) => UI.hi(UI.esc(`${i + 1}. ${table[id].label}`)) + '\n' + UI.t('   ' + table[id].desc)).join('\n');
+    const k = await UI.menu(UI.t(question) + '\n\n' + desc + '\n', ids.map((id, i) => ({ k: String(i + 1), label: label(table[id]) })));
+    return ids[parseInt(k, 10) - 1];
   },
 
   async pickRole() {

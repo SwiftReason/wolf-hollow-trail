@@ -3,7 +3,7 @@
 const Shop = {
   price(G, item, lm) {
     const mult = (lm && lm.priceMult) || 1;
-    return Math.round(item.price * mult * Q.perk(G, 'priceMult') / 100) * 100;
+    return Math.round(item.price * mult * Q.perk(G, 'priceMult') * Q.diff(G).prices / 100) * 100;
   },
 
   // Free miner positions, in racks.
@@ -29,12 +29,14 @@ const Shop = {
     const prev = Scene.save();
     Scene.show('store');
     const prevMusic = Music.play('store');
+    const before = G.sats;
     try {
       await Shop.counter(G, lm, first);
     } finally {
       Scene.restore(prev);
       if (prevMusic) Music.play(prevMusic);
     }
+    if (G.sats < before) Journal.add(G, `Spent ${U.num(before - G.sats)} sats at ${DATA.store.name} in ${lm.name}.`);
   },
 
   async counter(G, lm, first) {

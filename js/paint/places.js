@@ -17,6 +17,27 @@ const Places = {
     }
     ctx.drawImage(img, 0, 0);
     if (S.anim) S.anim(ctx, t, p);
+    if (S.park) Places.parked(ctx, t, p, S.park);
+  },
+
+  // The UTV parked at a landmark; when `arrive` is set it drives in first.
+  parked(ctx, t, p, [px, py]) {
+    let x = px, moving = false;
+    if (p.arrive != null) {
+      const k = U.clamp((t - p.arrive) / 1.8, 0, 1);
+      x = Math.round(-56 + (px + 56) * (1 - Math.pow(1 - k, 3)));
+      moving = k < 1;
+      if (moving) {
+        for (let i = 0; i < 4; i++) {
+          const a = (t * 1.6 + i / 4) % 1;
+          ctx.globalAlpha = 0.7 * (1 - a);
+          Gfx.ellipse(ctx, x + 4 - a * 26, py + 25 - a * 7, 2 + Math.round(a * 4), 1 + Math.round(a * 2), '#e6d8b4');
+        }
+        ctx.globalAlpha = 1;
+      }
+    }
+    Gfx.ellipse(ctx, x + 24, py + 27, 24, 1, 'rgba(0,0,0,0.25)');
+    Sprites.utv(ctx, x, py, { t, moving });
   },
 
   // ------------------------------------------------------------- helpers
@@ -123,10 +144,11 @@ const Places = {
         Sprites.pricklyPear(x, 40, 140);
         Sprites.person(x, 210, 120, {});
       },
-      anim(ctx, t) { Sprites.utv(ctx, 30, 118, { t }); },
+      park: [30, 118],
     },
 
     substation: {
+      park: [40, 128],
       paint(x) {
         Places.daySky(x);
         Places.mesas(x, 100, '#9a8aae', '#a08068', 3.3);
@@ -238,6 +260,7 @@ const Places = {
     },
 
     hydro_pass: {
+      park: [196, 128],
       paint(x) {
         Places.daySky(x);
         Places.mesas(x, 96, '#9a8aae', '#a08068', 5.5);
@@ -279,6 +302,7 @@ const Places = {
     },
 
     ercot_peak: {
+      park: [232, 118],
       paint(x) {
         Places.sky(x, [[0, '#4a1a2a'], [0.5, '#c0442e'], [0.85, '#f09a40'], [1, '#ffd27a']]);
         Gfx.disc(x, 250, 96, 22, '#ffe08a');
@@ -374,6 +398,7 @@ const Places = {
     },
 
     loading_dock: {
+      park: [150, 124],
       paint(x) {
         Places.daySky(x, 30);
         Gfx.rect(x, 0, 20, 320, 96, '#8a909a');
@@ -403,6 +428,7 @@ const Places = {
     },
 
     halving: {
+      park: [40, 116],
       paint(x) {
         Places.sky(x, [[0, '#0a0c24'], [1, '#2a2a5a']]);
         Places.stars(x, 80, 100, 9);
@@ -434,7 +460,87 @@ const Places = {
             Gfx.px(ctx, cx + Math.cos(a) * r, cy + Math.sin(a) * r + age * age * 6, col);
           }
         }
-        Sprites.utv(ctx, 40, 116, { t });
+      },
+    },
+
+    north_forty: {
+      park: [24, 122],
+      paint(x) {
+        Places.sky(x, [[0, '#4a7ad0'], [0.6, '#b0c8e0'], [1, '#f4e2b0']]);
+        Gfx.disc(x, 70, 24, 12, '#fff6cc');
+        Places.mesas(x, 98, '#a49aa8', '#a88a6a', 10.4);
+        Places.ground(x, 98, '#b88e5a', '#94703e');
+        Gfx.speckle(x, 0, 100, 320, 60, '#a8804e', 0.25);
+        // New containers, one still on the crane
+        for (let i = 0; i < 4; i++) {
+          const cx = 96 + i * 54;
+          Gfx.rect(x, cx, 80, 48, 22, '#e4e8ee');
+          for (let k = 2; k < 48; k += 3) Gfx.rect(x, cx + k, 82, 1, 18, '#c8ccd4');
+          Gfx.disc(x, cx + 14, 91, 5, '#4a505c'); Gfx.disc(x, cx + 32, 91, 5, '#4a505c');
+        }
+        // Crane: mast, boom, cab
+        Gfx.rect(x, 282, 30, 6, 74, '#e0b020');
+        for (let y = 30; y < 100; y += 6) Gfx.line(x, 282, y, 287, y + 6, '#a07a10');
+        Gfx.line(x, 285, 32, 196, 12, '#e0b020', 2);
+        Gfx.rect(x, 276, 92, 20, 12, '#e0b020'); Gfx.rect(x, 280, 94, 8, 5, '#9ac8f0');
+        // Survey stakes and the sign
+        for (let i = 0; i < 6; i++) { Gfx.rect(x, 20 + i * 14, 108, 1, 6, '#f4f4f0'); Gfx.rect(x, 21 + i * 14, 108, 3, 2, '#ff7a1a'); }
+        Gfx.rect(x, 62, 90, 2, 18, '#5a4232');
+        Places.sign(x, 36, 78, 56, 14, '#2a5aa8', '#1a3a70', ['PHASE 2'], '#ffffff');
+      },
+      anim(ctx, t) {
+        const sway = Math.round(Math.sin(t * 1.3) * 3), cy = 40 + Math.round(Math.sin(t * 0.7) * 2);
+        Gfx.line(ctx, 200, 14, 196 + sway, cy, '#3a3a3a');
+        Gfx.line(ctx, 200, 14, 228 + sway, cy, '#3a3a3a');
+        Gfx.rect(ctx, 192 + sway, cy, 40, 16, '#e4e8ee');
+        for (let k = 2; k < 40; k += 3) Gfx.rect(ctx, 192 + sway + k, cy + 2, 1, 12, '#c8ccd4');
+      },
+    },
+
+    // ---------------------------------------------------------- crew portraits
+    crew: {
+      key: p => JSON.stringify(p.crew),
+      paint(x, p) {
+        Gfx.gradient(x, 0, 0, 320, 160, [[0, '#1c2440'], [1, '#0c1020']]);
+        const hats = { manager: '#f4f4f0', electrician: '#f6c432', maintenance: '#ff7a1a', inventory: '#3a8ad8', tech: '#3faa5a' };
+        const skins = ['#f0c8a0', '#e2a878', '#c8885a', '#9a6040', '#6a4228'];
+        const hairs = ['#2a1a10', '#6a4a2a', '#c89a5a', '#1a1a1a', '#8a8a8a'];
+        p.crew.forEach((c, i) => {
+          const px = 6 + i * 62, cx = px + 29, h = Gfx.hash([...c.name].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7));
+          const g = col => c.alive ? col : Gfx.mix(col, '#7a7a80', 0.85);
+          const tint = col => c.alive && c.sick ? Gfx.mix(col, '#9ac070', 0.25) : g(col);
+          Gfx.rect(x, px, 10, 58, 112, '#0a0e1c');
+          Gfx.rect(x, px + 1, 11, 56, 110, g('#2b4c92'));
+          Gfx.gradient(x, px + 3, 13, 52, 88, [[0, g('#5a7ac8')], [1, g('#2b4c92')]]);
+          const skin = skins[Math.floor(h * skins.length)], hair = hairs[Math.floor(Gfx.hash(Math.floor(h * 1e6)) * hairs.length)];
+          Gfx.ellipse(x, cx, 98, 22, 12, tint(c.role === 'inventory' || c.role === 'manager' ? '#4a6a8a' : Pal.vest));
+          if (c.role !== 'inventory' && c.role !== 'manager') { Gfx.rect(x, cx - 20, 92, 40, 2, g(Pal.stripe)); }
+          Gfx.rect(x, cx - 4, 74, 8, 10, tint(skin));
+          Gfx.ellipse(x, cx, 60, 12, 15, tint(skin));
+          Gfx.rect(x, cx - 12, 52, 3, 12, g(hair)); Gfx.rect(x, cx + 10, 52, 3, 12, g(hair));
+          const hat = hats[c.role] || Pal.helmet;
+          if (c.role === 'inventory') { Gfx.ellipse(x, cx, 47, 13, 7, g(hat)); Gfx.rect(x, cx, 49, 17, 3, g(hat)); }
+          else { Gfx.ellipse(x, cx, 47, 14, 8, g(hat)); Gfx.rect(x, cx - 16, 50, 32, 3, g(Gfx.shade(hat, -0.2))); }
+          if (c.alive) {
+            Gfx.rect(x, cx - 6, 59, 3, 3, '#ffffff'); Gfx.rect(x, cx + 3, 59, 3, 3, '#ffffff');
+            Gfx.px(x, cx - 5, 60, '#1a1a1a'); Gfx.px(x, cx + 4, 60, '#1a1a1a');
+            Gfx.rect(x, cx - 3, 68, 6, 1, c.health >= 45 ? '#8a3a2a' : '#5a2a1a');
+            if (c.sick) { Gfx.px(x, cx + 12, 56, '#9ce0fa'); Gfx.px(x, cx + 12, 58, '#9ce0fa'); }
+          } else {
+            for (const ex of [cx - 5, cx + 4]) { Gfx.line(x, ex - 1, 58, ex + 1, 60, '#2a2a2a'); Gfx.line(x, ex + 1, 58, ex - 1, 60, '#2a2a2a'); }
+            Gfx.rect(x, cx - 3, 68, 6, 1, '#3a3a3a');
+          }
+          const name = c.name.length > 7 ? c.name.slice(0, 6) + '.' : c.name;
+          Gfx.text(x, name, cx, 104, c.alive ? '#f4ecd8' : '#8a8a90', { align: 'center' });
+          if (c.alive) {
+            Gfx.rect(x, px + 5, 116, 48, 4, '#0a0e1c');
+            const col = c.health >= 70 ? '#5cff7a' : c.health >= 45 ? '#ffd25a' : c.health >= 20 ? '#ff9a3a' : '#ff4a3a';
+            Gfx.rect(x, px + 5, 116, Math.max(2, Math.round(48 * c.health / 100)), 4, col);
+          } else {
+            Gfx.text(x, 'R.I.P.', cx, 113, '#c8c8d0', { align: 'center' });
+          }
+        });
+        Gfx.text(x, 'THE CREW', 160, 138, '#ffd25a', { align: 'center', shadow: '#000000' });
       },
     },
 
@@ -530,7 +636,7 @@ const Places = {
 
     // ------------------------------------------------------------------ map
     map: {
-      key: p => `${Math.floor(p.blocks / 10)}|${p.lm}`,
+      key: p => `${Math.floor(p.frac * 300)}|${p.lm}`,
       paint(x, p) {
         Gfx.rect(x, 0, 0, 320, 160, '#b8a878');
         Gfx.speckle(x, 0, 0, 320, 160, '#a49464', 0.3);
@@ -550,7 +656,7 @@ const Places = {
           if (prev && prev.zone) zone = prev.zone;
           const [px, py] = pos(b);
           Gfx.rect(x, px - 1, py - 1, 4, 4, '#6a5232');
-          Gfx.rect(x, px, py, 2, 2, b < p.blocks ? '#e8d4a0' : zoneCol[zone]);
+          Gfx.rect(x, px, py, 2, 2, b < p.frac * total ? '#e8d4a0' : zoneCol[zone]);
         }
         L.forEach((l, i) => {
           const [lx, ly] = pos(l.block);
@@ -565,7 +671,7 @@ const Places = {
         Gfx.rect(x, 216, 143, 6, 3, "#7aa0f0"); Gfx.text(x, "HYDRO", 226, 141, "#3a2a18");
       },
       anim(ctx, t, p) {
-        const f = p.blocks / DATA.config.totalBlocks;
+        const f = p.frac;
         const px = 16 + f * 288, py = 80 + Math.sin(f * Math.PI * 3) * 32;
         if (Math.floor(t * 3) % 3) {
           Gfx.rect(ctx, px - 5, py - 14, 10, 6, Pal.navy); Gfx.rect(ctx, px - 5, py - 15, 10, 1, Pal.black);

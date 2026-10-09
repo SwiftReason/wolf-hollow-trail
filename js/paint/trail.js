@@ -276,7 +276,44 @@ const Trail = {
     Gfx.ellipse(ctx, X + 24, Trail.ROAD_Y, 24, 1, 'rgba(0,0,0,0.25)');
     Sprites.utv(ctx, X, Y, { t, moving, cargo: true });
 
+    // Dusk and night wash over everything; then the lights that cut through it.
+    const L = Trail.light(G);
+    if (L.dusk > 0.01) {
+      ctx.fillStyle = `rgba(255,110,50,${(0.2 * L.dusk).toFixed(3)})`;
+      ctx.fillRect(0, 0, 320, 160);
+    }
+    if (L.night > 0.01) {
+      ctx.fillStyle = `rgba(8,12,40,${(0.64 * L.night).toFixed(3)})`;
+      ctx.fillRect(0, 0, 320, 160);
+      ctx.globalAlpha = L.night;
+      for (let i = 0; i < 40; i++) {
+        if ((Math.floor(t * 2) + i) % 9 === 0) continue;
+        Gfx.px(ctx, Math.floor(Gfx.hash(i * 17 + 3) * 320), Math.floor(Gfx.hash(i * 29 + 3) * 48), i % 4 ? '#c8c8e8' : '#ffffff');
+      }
+      if (sky !== 'storm') { Gfx.disc(ctx, 54, 22, 7, '#ecead4'); Gfx.disc(ctx, 51, 20, 2, '#d0ccb0'); }
+      for (const l of mid.leds) {
+        const lx = at(l.x);
+        if (lx > -4 && lx < 324) { Gfx.rect(ctx, lx - 1, 59 + l.y, 4, 3, 'rgba(92,255,122,0.35)'); Gfx.rect(ctx, lx, 60 + l.y, 2, 1, Pal.ledGreen); }
+      }
+      for (const f of mid.fans) {
+        const fx = at(f.x);
+        if (fx > -8 && fx < 328 && (Math.floor(t + f.x) % 3)) Gfx.px(ctx, fx, 60 + f.y - f.r - 2, Pal.ledBlue);
+      }
+      ctx.fillStyle = `rgba(255,240,170,${(0.22 * L.night).toFixed(3)})`;
+      Gfx.poly(ctx, [[X + 46, Y + 11], [X + 120, Y + 2], [X + 120, Y + 32], [X + 46, Y + 14]], `rgba(255,240,170,${(0.2 * L.night).toFixed(3)})`);
+      Gfx.rect(ctx, X + 43, Y + 11, 3, 2, Pal.light);
+      Gfx.rect(ctx, X, Y + 11, 2, 2, '#ff5040');
+      ctx.globalAlpha = 1;
+    }
+
     Trail.weather(ctx, t, sky);
+  },
+
+  // Sun height from G.tod (0..1; noon near 0.35, midnight near 0.85).
+  light(G) {
+    const tod = G && G.tod != null ? G.tod : 0.3;
+    const e = Math.cos((tod - 0.35) * Math.PI * 2);
+    return { night: U.clamp((-e - 0.05) / 0.45, 0, 1), dusk: U.clamp(1 - Math.abs(e + 0.08) / 0.3, 0, 1) };
   },
 
   weather(ctx, t, sky) {

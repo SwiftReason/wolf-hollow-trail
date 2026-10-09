@@ -15,7 +15,13 @@ const Travel = {
       UI.dim(UI.esc(`${C.zones[G.zone].label}  /  ${C.tuning[G.tuning].label}  /  ${C.shifts[G.shift].label}`)),
       '',
       `<span class="opt">${UI.center('Press ENTER to size up the situation')}</span>`,
+      `<span class="opt" data-k="F">${UI.dim(UI.center(G.fast ? 'Fast-forward is on. F to slow down.' : 'Press F to fast-forward.'))}</span>`,
     ].join('\n'));
+  },
+
+  // Show an event's picture over the trail (see js/paint/vignettes.js).
+  picture(ev) {
+    Scene.setOverlay(ev.pic || DATA.eventPics[ev.type] || null);
   },
 
   // --------------------------------------------------------------- the loop
@@ -49,11 +55,21 @@ const Travel = {
         Scene.setMoving(false);
         resolve(v);
       };
+      const dayMs = () => DATA.config.dayMs / (G.fast ? DATA.config.fastForward : 1);
       Scene.trail(G);
-      Scene.setMoving(true);
+      Scene.setMoving(true, G.fast ? DATA.config.fastForward : 1);
       Music.play('trail');
       Travel.render(G);
-      UI.waitKeys([], true).then(() => finish({ menu: true }));
+      // ENTER/SPACE stops to size up; F toggles fast-forward and keeps going.
+      const listen = () => UI.waitKeys(['F'], true).then(k => {
+        if (done) return;
+        if (k !== 'F') { finish({ menu: true }); return; }
+        G.fast = !G.fast;
+        Scene.setMoving(true, G.fast ? DATA.config.fastForward : 1);
+        Travel.render(G);
+        listen();
+      });
+      listen();
       const step = () => {
         if (done) return;
         const res = Sim.day(G);
@@ -61,9 +77,9 @@ const Travel = {
         const interesting = res.notes.length || res.deaths.length || res.event || res.arrived ||
           res.graves.length || Q.over(G);
         if (interesting) finish({ res });
-        else { Save.write(G); timer = setTimeout(step, DATA.config.dayMs); }
+        else { Save.write(G); timer = setTimeout(step, dayMs()); }
       };
-      timer = setTimeout(step, DATA.config.dayMs);
+      timer = setTimeout(step, dayMs());
     });
   },
 
@@ -71,7 +87,10 @@ const Travel = {
   async process(G, res) {
     for (const note of res.notes) {
       Sound.bad();
+      Journal.add(G, note);
+      Scene.setOverlay(/burned out/.test(note) ? 'fire' : 'smoke');
       await UI.pause(Travel.frame(G, '\n' + UI.t(note)));
+      Scene.setOverlay(null);
     }
     for (const g of res.graves) await Death.grave(G, g);
     for (const i of res.deaths) await Death.announce(G, i);
@@ -88,6 +107,7 @@ const Travel = {
   },
 
   async runEvent(G, roll) {
+    if (roll.ev.choices) return Travel.runChoice(G, roll);
     if (Engine.escalatable(G, roll.ev)) {
       const mgr = Q.alive(G).find(c => c.role === 'manager' && !c.escalated);
       if (mgr) {
@@ -99,6 +119,7 @@ const Travel = {
         if (yes) {
           mgr.escalated = true;
           Sound.good();
+          Journal.add(G, `${mgr.name} escalated something to corporate. It never happened.`);
           await UI.pause(Travel.frame(G, '\n' + UI.t('Corporate escalated it. It never happened. There is a ticket.')));
           return null;
         }
@@ -107,8 +128,16 @@ const Travel = {
     const o = Engine.apply(G, roll);
     if (!o.deaths.length) {
       o.good ? Sound.good() : Sound.bad();
+      Journal.add(G, o.text);
+      Travel.picture(roll.ev);
       await UI.pause(Travel.frame(G, '\n' + UI.t(o.text)));
+      Scene.setOverlay(null);
     }
+    return Travel.aftermath(G, o);
+  },
+
+  // Deaths, then any days the event cost.
+  async aftermath(G, o) {
     for (const i of o.deaths) await Death.announce(G, i);
     if (Q.over(G)) return Death.gameOver(G);
     for (let d = 0; d < o.days; d++) {
@@ -116,6 +145,22 @@ const Travel = {
       if (end) return end;
     }
     return null;
+  },
+
+  // The trail asks you something.
+  async runChoice(G, roll) {
+    const ev = roll.ev;
+    const prompt = U.tmpl(ev.text, { name: G.crew[roll.target].name, n: roll.n, month: Q.monthName(G) });
+    Travel.picture(ev);
+    Sound.blip();
+    const opts = ev.choices.map((c, i) => ({ k: String(i + 1), label: c.label, disabled: !Engine.choiceOk(G, c) }));
+    const k = await UI.menu(UI.t(prompt) + '\n', opts, 'What will you do?');
+    const o = Engine.applyChoice(G, roll, parseInt(k, 10) - 1);
+    o.good ? Sound.good() : Sound.bad();
+    Journal.add(G, `${prompt} (${o.choice}) ${o.text}`);
+    if (o.text) await UI.pause(UI.t(o.text));
+    Scene.setOverlay(null);
+    return Travel.aftermath(G, o);
   },
 
   // ------------------------------------------------------- size up / menus
@@ -141,6 +186,7 @@ const Travel = {
         { k: '7', label: 'Attempt to trade' },
         { k: '8', label: 'Salvage the RMA pile' },
         { k: '9', label: 'Check the crew' },
+        { k: 'J', label: 'Read the trail journal' },
       ];
       if (lm && lm.talk && lm.talk.length) opts.push({ k: 'T', label: 'Talk to people' });
       if (lm && lm.store) opts.push({ k: 'B', label: 'Buy supplies' });
@@ -157,6 +203,7 @@ const Travel = {
       if (k === '7') end = await Travel.trade(G);
       if (k === '8') end = await Salvage.run(G);
       if (k === '9') await Travel.crew(G);
+      if (k === 'J') await Travel.journal(G);
       if (k === 'T') await UI.pause(UI.hi(UI.center(lm.name)) + '\n' + UI.rule() + '\n\n' + UI.t(U.pick(lm.talk)));
       if (k === 'B') await Shop.run(G, lm, false);
       if (k === 'Q') return 'quit';
@@ -181,6 +228,7 @@ const Travel = {
   },
 
   async crew(G) {
+    Scene.show('crew', { crew: G.crew.map(c => ({ name: c.name, role: c.role, alive: c.alive, health: Math.round(c.health), sick: c.ailments.length > 0 })) });
     const lines = [UI.hi(UI.center('YOUR CREW')), UI.rule()];
     G.crew.forEach((c, i) => {
       const role = Q.role(c.role).short;
@@ -197,16 +245,48 @@ const Travel = {
     await UI.pause(lines.join('\n'));
   },
 
+  // The trail journal, newest page first.
+  async journal(G, title = 'TRAIL JOURNAL') {
+    const J = G.journal || [];
+    if (!J.length) {
+      await UI.pause(UI.hi(UI.center(title)) + '\n\n' + UI.t('Nothing has happened yet. Give it time.'));
+      return;
+    }
+    const pages = [];
+    let cur = [], lastDate = null;
+    for (const e of J) {
+      const block = [...(e.d !== lastDate ? [UI.dim(UI.esc(e.d))] : []), ...U.wrap(e.t, UI.W).map(UI.esc)];
+      lastDate = e.d;
+      if (cur.length + block.length > 13 && cur.length) {
+        pages.push(cur);
+        cur = e.d === block[0] ? [] : [UI.dim(UI.esc(e.d))];
+      }
+      cur.push(...block);
+    }
+    if (cur.length) pages.push(cur);
+    let p = pages.length - 1;
+    while (true) {
+      const opts = [];
+      if (p > 0) opts.push({ k: 'P', label: 'Earlier pages' });
+      if (p < pages.length - 1) opts.push({ k: 'N', label: 'Later pages' });
+      opts.push({ k: '0', label: 'Close the journal' });
+      const k = await UI.menu(UI.hi(UI.center(`${title}  ${p + 1} / ${pages.length}`)) + '\n' + pages[p].join('\n') + '\n', opts, 'Choice?');
+      if (k === 'P') p--;
+      else if (k === 'N') p++;
+      else return;
+    }
+  },
+
   async map(G) {
     const L = DATA.landmarks;
-    Scene.show('map', { blocks: G.blocks, lm: G.lm });
+    Scene.show('map', { frac: G.blocks / Q.total(G), lm: G.lm });
     const lines = [
       UI.hi(UI.center('MAP OF WOLF HOLLOW')),
       UI.dim(UI.esc(U.center(`you are at block ${U.num(Math.floor(G.blocks))}`))),
     ];
     L.forEach((l, i) => {
       const passed = i < G.lm;
-      const s = `${l.mapKey}  ${U.padR(l.name, 24)}${U.padL(U.num(l.block), 6)}  ${passed ? '*' : ' '}`;
+      const s = `${l.mapKey}  ${U.padR(l.name, 24)}${U.padL(U.num(Q.landmark(G, i).block), 6)}  ${passed ? '*' : ' '}`;
       lines.push(passed ? UI.dim(UI.esc(s)) : UI.esc(s));
     });
     lines.push('', UI.dim(UI.esc('* passed')));
@@ -240,6 +320,7 @@ const Travel = {
       const end = await Travel.process(G, res);
       if (end) return end;
     }
+    Journal.add(G, `Rested for ${n} day${n > 1 ? 's' : ''}. Health is ${Q.groupHealth(G)}.`);
     await UI.pause(Travel.frame(G, '\n' + UI.t(`You rested for ${n} day${n > 1 ? 's' : ''}. Health is ${Q.groupHealth(G)}.`)));
     return null;
   },
@@ -259,6 +340,7 @@ const Travel = {
       for (const k in get) G.s[k] += get[k];
       Sim.repair(G);
       Sound.good();
+      Journal.add(G, `Traded ${words(give)} to ${offer.who.replace(/^A /, 'a ').replace(/^An /, 'an ').replace(/^The /, 'the ')} for ${words(get)}.`);
     }
     // Trading takes the day.
     return Travel.process(G, Sim.day(G, { noProgress: true, noEvents: true }));

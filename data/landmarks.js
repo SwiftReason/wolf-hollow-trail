@@ -1,4 +1,5 @@
-// Stops along the trail, in order. `block` is distance from the start.
+// Stops along the trail, in order. `block` is distance from the start on a
+// Normal (2,016-block) trip; Short and Long trips scale these.
 // type: start | town (store) | landmark | crossing | ercot | difficulty | mempool | end
 // zone: the cooling zone you're in after leaving this landmark (omit = no change)
 // Each landmark's picture is painted in js/paint/places.js under its id.
@@ -16,7 +17,7 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'substation', name: 'The Substation', mapKey: 'S', block: 140, type: 'town', zone: 'air',
+    id: 'substation', name: 'The Substation', mapKey: 'S', block: 130, type: 'town', zone: 'air',
     store: true, priceMult: 1.15,
     desc: '138 kV comes in. Hashrate goes out. A sign says DANGER. A second sign says DANGER, louder.',
     talk: [
@@ -26,7 +27,7 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'hot_aisle', name: 'The Hot Aisle', mapKey: 'H', block: 300, type: 'landmark', zone: 'air',
+    id: 'hot_aisle', name: 'The Hot Aisle', mapKey: 'H', block: 280, type: 'landmark', zone: 'air',
     desc: 'Air goes in cool and comes out angry. Someone wrote ABANDON HOPE on the door in dry-erase marker two years ago.',
     talk: [
       'A tech with no eyebrows says: "You get used to it. You don\'t, but you say you do."',
@@ -34,7 +35,7 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'immersion_lake', name: 'Immersion Lake', mapKey: 'I', block: 470, type: 'crossing', zone: 'immersion',
+    id: 'immersion_lake', name: 'Immersion Lake', mapKey: 'I', block: 440, type: 'crossing', zone: 'immersion',
     desc: 'Forty tanks of dielectric fluid, still as a church. The fleet has to be migrated across.',
     talk: [
       'A Maintenance tech says: "The fluid is fine. The floor is the problem."',
@@ -42,7 +43,7 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'hydro_pass', name: 'Hydro Pass', mapKey: 'Y', block: 680, type: 'crossing', zone: 'hydro',
+    id: 'hydro_pass', name: 'Hydro Pass', mapKey: 'Y', block: 640, type: 'crossing', zone: 'hydro',
     store: true, priceMult: 1.2,
     desc: 'Supply on the left. Return on the right. Allegedly.',
     talk: [
@@ -51,7 +52,7 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'ercot_peak', name: 'ERCOT Peak', mapKey: 'E', block: 860, type: 'ercot',
+    id: 'ercot_peak', name: 'ERCOT Peak', mapKey: 'E', block: 820, type: 'ercot',
     desc: 'Grid load is at a record. This could be a 4CP interval. Nobody will know until October.',
     talk: [
       'Your Electrician says: "Curtail. Or don\'t. It\'s only the whole year\'s transmission bill."',
@@ -68,7 +69,16 @@ DATA.landmarks = [
     ],
   },
   {
-    id: 'mempool_swamp', name: 'The Mempool Swamp', mapKey: 'M', block: 1400, type: 'mempool',
+    id: 'north_forty', name: 'The North Forty', mapKey: 'N', block: 1220, type: 'crossing', zone: 'air',
+    desc: "Corporate's new air-cooled expansion: containers on a fresh dirt pad, no shade for a mile. The fleet has to come off the hydro loops.",
+    talk: [
+      'A crane operator says: "They poured this pad in August. You can still smell it."',
+      'Your Maintenance tech says: "Air cooling again. I just got used to being wet."',
+      'A surveyor says: "Phase 3 goes over there. Phase 3 always goes over there."',
+    ],
+  },
+  {
+    id: 'mempool_swamp', name: 'The Mempool Swamp', mapKey: 'M', block: 1440, type: 'mempool',
     desc: 'Three hundred thousand unconfirmed transactions. Something is minting JPEGs again.',
     talk: [
       'A stranger says: "My transaction has been pending since March. Which March, I won\'t say."',

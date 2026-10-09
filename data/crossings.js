@@ -3,7 +3,9 @@
 //
 // Crossing readings work like the river's depth: above `safe` things get
 // risky, at `danger` they're as bad as they get.
-// Tokens: {name} crew member, {n} miners, {gal} gallons, {sats}, {days},
+// need: what the safe drain-and-refill option uses up.
+// reading.weather: the reading is today's temperature instead of its own roll.
+// Tokens: {name} crew member, {n} miners, {need} what it used, {sats}, {days},
 // {amount} lost supplies ("3 spare fans")
 window.DATA = window.DATA || {};
 
@@ -11,7 +13,7 @@ DATA.crossings = {
   immersion_lake: {
     intro: 'The fleet must be migrated from air to immersion cooling. {racks} racks to move.',
     reading: { label: 'Fluid temp', unit: 'F', min: 86, max: 124, safe: 100, danger: 120 },
-    fluid: 'dielectric', fluidNeed: 110,
+    need: { dielectric: 110 },
     ferry: { who: 'ImmerseCo', price: 450000, days: [2, 5] },
     options: {
       ford:  'Hot-swap them live',
@@ -26,7 +28,7 @@ DATA.crossings = {
     ],
     success: {
       ford:  'You hot-swapped the fleet into the tanks. Nothing caught fire. Lose 1 day.',
-      caulk: 'You drained, swapped, and refilled. It took 3 days and {gal} gallons of fluid. The tanks are full.',
+      caulk: 'You drained, swapped, and refilled. It took 3 days and {need}. The tanks are full.',
       ferry: 'ImmerseCo arrived {days} days late and moved everything. They left a sticker on every tank.',
     },
     fail: {
@@ -44,7 +46,7 @@ DATA.crossings = {
   hydro_pass: {
     intro: 'The fleet must be migrated from immersion to hydro cooling. {racks} racks to re-plumb.',
     reading: { label: 'Loop pressure', unit: ' psi', min: 30, max: 95, safe: 50, danger: 85 },
-    fluid: 'glycol', fluidNeed: 80,
+    need: { glycol: 80 },
     ferry: { who: 'Pipe & Pray Plumbing', price: 380000, days: [2, 4] },
     options: {
       ford:  'Re-plumb them live',
@@ -59,7 +61,7 @@ DATA.crossings = {
     ],
     success: {
       ford:  'You re-plumbed the fleet live. Everyone is damp. Lose 1 day.',
-      caulk: 'You drained the loops, swapped, and refilled with {gal} gallons of glycol. It took 3 days.',
+      caulk: 'You drained the loops, swapped, and refilled with {need}. It took 3 days.',
       ferry: 'Pipe & Pray showed up {days} days late. Everything is connected. Some of it to the right thing.',
     },
     fail: {
@@ -71,6 +73,38 @@ DATA.crossings = {
     deaths: [
       '{name} was pressure-washed into the afterlife by a burst manifold.',
       '{name} forgot which valve was the supply side. For the last time.',
+    ],
+  },
+  north_forty: {
+    intro: 'The fleet must be migrated off the hydro loops and back to air cooling. {racks} racks to haul to the new containers.',
+    reading: { label: 'Pad temp', unit: 'F', min: 60, max: 110, safe: 85, danger: 105, weather: true },
+    need: { zipties: 100 },
+    ferry: { who: 'Lone Star Rigging', price: 300000, days: [2, 4] },
+    options: {
+      ford:  'Haul them hot',
+      caulk: 'Re-rack and re-cable',
+      ferry: 'Hire Lone Star Rigging',
+    },
+    info: [
+      'HAUL THEM HOT: fast and free. Rack after rack across an unshaded pad. Heat is the danger, for people and hashboards.',
+      'RE-RACK AND RE-CABLE: drain the loops, rack it all by hand. Takes 3 days and 100 zip ties. Slow and safe.',
+      'LONE STAR RIGGING: they bring a crane. Costs sats. You wait for them.',
+      'WAIT A DAY: maybe it cools off. This is Texas.',
+    ],
+    success: {
+      ford:  'You hauled the fleet across the pad and racked it in the containers. Everyone is sunburned. Lose 1 day.',
+      caulk: 'You drained the loops, re-racked, and re-cabled with {need}. It took 3 days.',
+      ferry: 'Lone Star Rigging showed up {days} days late with a crane nobody asked for. It worked.',
+    },
+    fail: {
+      ford:  'A rack slid off the forklift on the hot pad. {n} miners are scrap.',
+      caulk: 'Someone re-cabled a row of PDUs backwards. {n} miners went dark.',
+      ferry: 'The crane clipped a container. {n} miners. They will send a bill.',
+    },
+    lost: '{amount} fell off the trailer.',
+    deaths: [
+      '{name} got heat stroke hauling racks across the North Forty.',
+      '{name} was under the rack when the forklift sneezed.',
     ],
   },
 };

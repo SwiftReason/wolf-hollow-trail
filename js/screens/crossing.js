@@ -25,6 +25,7 @@ function landmarkHead(G, lm) {
 // Show a Decide outcome, then any deaths, then the days it took.
 async function showOutcome(G, lm, o) {
   commit(G);
+  Journal.add(G, o.lines.join(' '));
   o.good ? Sound.good() : Sound.bad();
   await UI.pause(landmarkHead(G, lm) + '\n' + o.lines.map(UI.t).join('\n\n'));
   for (const i of o.deaths) await Death.announce(G, i);
@@ -39,11 +40,11 @@ const Crossing = {
     const C = DATA.crossings[lm.id];
     if (!C || lm.zone === G.zone) return null;
     const ch = G.choice;
-    if (ch.base == null) { ch.base = Decide.crossingRoll(C); Save.write(G); }
+    if (ch.base == null) { ch.base = Decide.crossingRoll(C, null, G); Save.write(G); }
     while (true) {
       const r = Decide.crossingReading(C, G, ch.base);
       const price = Decide.ferryPrice(G, C);
-      const have = G.s[C.fluid];
+      const stock = Object.keys(C.need)[0], unit = DATA.supplies[stock].unit;
       const head = [
         landmarkHead(G, lm),
         UI.t(U.tmpl(C.intro, { racks: Math.ceil(G.fleet.online / 20) })),
@@ -52,13 +53,13 @@ const Crossing = {
           (G.weather.cond !== 'clear' ? `, ${DATA.weather.conditions[G.weather.cond].label}` : ''), 18),
         UI.kv(C.reading.label, `${r.shown}${C.reading.unit}`, 18),
         UI.kv('Risk', Crossing.risk(r.sev), 18),
-        UI.kv(DATA.supplies[C.fluid].label, `${U.num(have)} gal`, 18),
+        UI.kv(DATA.supplies[stock].label, `${U.num(G.s[stock])}${unit === 'gal' ? ' gal' : ''}`, 18),
         UI.rule(),
         'You may:',
       ].join('\n');
       const k = await UI.menu(head, [
         { k: '1', label: C.options.ford },
-        { k: '2', label: `${C.options.caulk} (${C.fluidNeed} gal)`, disabled: have < C.fluidNeed },
+        { k: '2', label: `${C.options.caulk} (${Decide.needShort(C)})`, disabled: !Decide.canDrain(G, C) },
         { k: '3', label: `${C.options.ferry} (${U.num(price)})`, disabled: G.sats < price },
         { k: '4', label: 'Wait a day' },
         { k: '5', label: 'Get more information' },
@@ -71,7 +72,7 @@ const Crossing = {
       if (k === '4') {
         const end = await passDays(G, 1, {});
         if (end) return end;
-        ch.base = Decide.crossingRoll(C, ch.base);
+        ch.base = Decide.crossingRoll(C, ch.base, G);
         Save.write(G);
         continue;
       }

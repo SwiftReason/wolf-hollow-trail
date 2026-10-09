@@ -57,7 +57,7 @@ const Sim = {
       let after = before + Sim.blocksPerDay(G, w);
       if (next && after >= next.block) { after = next.block; out.arrived = next; }
       G.blocks = after;
-      out.graves = Graves.between(before, after, G.id);
+      out.graves = Graves.between(G, before, after);
     }
 
     // Food and coolant.
@@ -112,7 +112,7 @@ const Sim = {
 
   failures(G, w, fluidShort, out) {
     const C = DATA.config, f = G.fleet, tun = C.tuning[G.tuning], zone = C.zones[G.zone];
-    let rate = C.baseFailRate * tun.fail * zone.fail;
+    let rate = C.baseFailRate * tun.fail * zone.fail * Q.diff(G).fail;
     if (G.zone === 'air') {
       rate *= 1 + Math.max(0, w.temp - 85) / 12 * tun.heat;
       if (w.cond === 'dust') rate *= 1.5;

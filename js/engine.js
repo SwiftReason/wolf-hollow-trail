@@ -13,6 +13,7 @@ const Engine = {
       short: Q.shortages(G),
       roles: Q.roleCounts(G),
       avgHealth: Q.avgHealth(G),
+      fatal: Q.diff(G).fatal,
     };
   },
 
@@ -30,13 +31,13 @@ const Engine = {
     if (m.season) w *= m.season[x.season] ?? 1;
     if (m.missing) for (const k in m.missing) if (x.short[k]) w *= m.missing[k];
     if (m.roles) for (const r in m.roles) w *= Math.pow(m.roles[r], x.roles[r] || 0);
-    if (ev.type === 'fatal') w *= 1.6 - x.avgHealth / 100;  // sick crews die more
+    if (ev.type === 'fatal') w *= (1.6 - x.avgHealth / 100) * x.fatal;  // sick crews die more
     return w;
   },
 
   roll(G) {
     const C = DATA.config;
-    const p = C.eventChance * C.tuning[G.tuning].events * C.shifts[G.shift].events;
+    const p = C.eventChance * C.tuning[G.tuning].events * C.shifts[G.shift].events * Q.diff(G).events;
     if (!U.chance(p)) return null;
     const x = Engine.ctx(G);
     const ev = U.weighted(DATA.events, e => Engine.weight(G, e, x));
@@ -64,6 +65,7 @@ const Engine = {
 
   // Bad enough that a Site Manager can escalate it away.
   escalatable(G, ev) {
+    if (ev.choices) return false;
     if (ev.type === 'fatal') return true;
     if (!Engine.canConsume(G, ev)) return true;
     if (ev.type === 'fleet' && !ev.consume && Array.isArray(ev.n) && ev.n[1] >= 25) return true;
@@ -72,8 +74,7 @@ const Engine = {
 
   // Apply a rolled event. Returns { text, deaths: [crewIdx], days, good }.
   apply(G, roll) {
-    const { ev, target, n } = roll;
-    const c = G.crew[target];
+    const { ev } = roll;
     let text = ev.text, eff = ev.effect || {};
     if (ev.consume) {
       if (Engine.canConsume(G, ev)) {
@@ -83,9 +84,42 @@ const Engine = {
         eff = ev.shortfall.effect || {};
       }
     }
+    return Engine.effect(G, roll, text, eff, ev.type === 'good');
+  },
+
+  // ------------------------------------------------------- choice events
+  // A choice can require sats or supplies: { requires: { sats: 500000 } }.
+  have(G, k) { return k === 'sats' ? G.sats : G.s[k]; },
+  choiceOk(G, ch) {
+    return !ch.requires || Object.entries(ch.requires).every(([k, v]) => Engine.have(G, k) >= v);
+  },
+  // Odds can improve with the right crew alive: roleBonus: { electrician: 0.15 }.
+  choiceOdds(G, ch) {
+    let p = ch.odds;
+    for (const [r, b] of Object.entries(ch.roleBonus || {})) p += b * Q.count(G, r);
+    return U.clamp(p, 0, 0.95);
+  },
+  applyChoice(G, roll, idx) {
+    const ch = roll.ev.choices[idx];
+    let branch = ch;
+    if (ch.odds != null) {
+      const won = U.chance(Engine.choiceOdds(G, ch));
+      branch = won ? ch.win : ch.lose;
+      branch = { ...branch, good: won };
+    }
+    const eff = { ...(ch.effect || {}), ...(branch !== ch ? branch.effect || {} : {}) };
+    const out = Engine.effect(G, roll, branch.text || ch.text || '', eff, branch.good ?? !!ch.good);
+    out.choice = ch.label;
+    return out;
+  },
+
+  // Shared effect handling for events and choices.
+  effect(G, roll, text, eff, good) {
+    const { ev, target, n } = roll;
+    const c = G.crew[target];
     const out = {
       text: U.tmpl(text, { name: c ? c.name : 'Someone', n, month: Q.monthName(G) }),
-      deaths: [], days: 0, good: ev.type === 'good',
+      deaths: [], days: 0, good,
     };
     const val = v => Engine.val(v, n);
 
@@ -102,6 +136,10 @@ const Engine = {
       }
     }
     if (eff.destroy) G.fleet.online = Math.max(0, G.fleet.online - val(eff.destroy));
+    if (eff.miners) {   // new miners, up to the site's free slots
+      const room = DATA.config.slots - G.fleet.online - Q.broken(G);
+      G.fleet.online += Math.max(0, Math.min(room, val(eff.miners)));
+    }
     if (eff.morale) {
       let m = val(eff.morale);
       if (ev.corporate && m < 0) m *= Q.perk(G, 'corporateMorale');

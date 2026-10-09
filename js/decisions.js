@@ -5,8 +5,10 @@
 
 const Decide = {
   // ------------------------------------------------------------ crossings
-  // The raw reading drifts day to day.
-  crossingRoll(C, prev) {
+  // The raw reading drifts day to day. Weather-based readings are just the
+  // day's temperature, give or take.
+  crossingRoll(C, prev, G) {
+    if (C.reading.weather && G) return G.weather.temp + U.ri(-2, 6);
     const v = U.ri(C.reading.min, C.reading.max);
     return prev == null ? v : Math.round(prev * 0.5 + v * 0.5);
   },
@@ -15,29 +17,36 @@ const Decide = {
   crossingReading(C, G, base) {
     const R = C.reading, span = R.danger - R.safe;
     let shown = base;
-    if (G.weather.heat === 'veryhot') shown += Math.round(span * 0.2);
-    else if (G.weather.heat === 'hot') shown += Math.round(span * 0.1);
+    if (!R.weather && G.weather.heat === 'veryhot') shown += Math.round(span * 0.2);
+    else if (!R.weather && G.weather.heat === 'hot') shown += Math.round(span * 0.1);
     if (G.tuning === 'overclocked') shown += Math.round(span * 0.15);
     return { shown, sev: U.clamp((shown - R.safe) / span, 0, 1.2) };
   },
 
   ferryPrice(G, C) {
-    return Math.round(C.ferry.price * Q.perk(G, 'priceMult') / 100) * 100;
+    return Math.round(C.ferry.price * Q.perk(G, 'priceMult') * Q.diff(G).prices / 100) * 100;
   },
 
+  // What drain-and-refill uses: "110 gal of dielectric fluid" / short "110 gal".
+  needText(C) { return Object.entries(C.need).map(([k, v]) => Q.amount(k, v)).join(' and '); },
+  needShort(C) {
+    return Object.entries(C.need).map(([k, v]) => DATA.supplies[k].unit === 'gal' ? `${v} gal` : Q.amount(k, v)).join(', ');
+  },
+  canDrain(G, C) { return Object.entries(C.need).every(([k, v]) => G.s[k] >= v); },
+
   // method: 'ford' (live), 'caulk' (drain/swap/refill), 'ferry' (contractor).
-  // Fluid for 'caulk' is used here; the ferry is paid for up front by the caller.
+  // What 'caulk' needs is used here; the ferry is paid for up front by the caller.
   crossing(G, lm, method, sev, vars = {}) {
     const C = DATA.crossings[lm.id];
     const odds = Q.perk(G, 'crossingOdds');
-    if (method === 'caulk') G.s[C.fluid] = Math.max(0, G.s[C.fluid] - C.fluidNeed);
+    if (method === 'caulk') for (const [k, v] of Object.entries(C.need)) G.s[k] = Math.max(0, G.s[k] - v);
     const pFail = { ford: 0.04 + 0.55 * sev, caulk: 0.03 + 0.2 * sev, ferry: 0.03 }[method] / odds;
     const failed = U.chance(pFail);
     const out = { lines: [], deaths: [], days: { ford: 1, caulk: 3, ferry: 0 }[method], good: !failed };
     G.zone = lm.zone;
 
     if (!failed) {
-      out.lines.push(U.tmpl(C.success[method], { gal: C.fluidNeed, days: vars.days || 0 }));
+      out.lines.push(U.tmpl(C.success[method], { need: Decide.needText(C), days: vars.days || 0 }));
       return out;
     }
 
@@ -57,7 +66,8 @@ const Decide = {
         out.lines.push(U.tmpl(C.lost, { amount: Q.amount(key, lost) }));
       }
     }
-    if (method === 'caulk') G.s[C.fluid] = Math.max(0, G.s[C.fluid] - 30);
+    // A botched refill wastes some of what you put in.
+    if (method === 'caulk') for (const [k, v] of Object.entries(C.need)) G.s[k] = Math.max(0, G.s[k] - Math.round(v * 0.3));
 
     const pDeath = { ford: 0.35 * (0.5 + sev), caulk: 0.1, ferry: 0 }[method] / odds;
     if (U.chance(pDeath)) {

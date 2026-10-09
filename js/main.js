@@ -26,6 +26,7 @@ const Game = {
     Promise.all(['8px "Press Start 2P"', '16px "Press Start 2P"', '20px Workbench'].map(f => document.fonts.load(f))),
     new Promise(r => setTimeout(r, 3000)),
   ]).catch(() => {});
+  Save.migrate();
   Scene.init();
   while (true) {
     try {

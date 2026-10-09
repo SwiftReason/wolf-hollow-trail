@@ -2,7 +2,24 @@
 window.DATA = window.DATA || {};
 
 DATA.config = {
-  totalBlocks: 2016,
+  totalBlocks: 2016,      // the Normal trip; landmark blocks are laid out for this and scaled for other lengths
+
+  // Trip length, chosen at setup. Landmarks and the schedule scale to fit.
+  lengths: {
+    short:  { label: 'Short',  blocks: 1008, desc: 'Half the trail. A long weekend, by Wolf Hollow standards.' },
+    normal: { label: 'Normal', blocks: 2016, desc: 'One difficulty epoch. The way the founders intended.' },
+    long:   { label: 'Long',   blocks: 4032, desc: 'Twice the trail. Bring more tacos.' },
+  },
+
+  // Difficulty, chosen at setup. Multipliers on the odds and the economy.
+  difficulties: {
+    greenhorn: { label: 'Greenhorn', events: 0.8, fatal: 0.5, fail: 0.75, prices: 0.85, sats: 1.25, score: 0.75,
+      desc: 'Fewer disasters, cheaper parts, more sats. Scores less.' },
+    normal:    { label: 'Normal',    events: 1,   fatal: 1,   fail: 1,    prices: 1,    sats: 1,    score: 1,
+      desc: 'Texas, as advertised.' },
+    grizzled:  { label: 'Grizzled',  events: 1.2, fatal: 1.6, fail: 1.3,  prices: 1.2,  sats: 0.85, score: 1.5,
+      desc: 'More of everything that goes wrong. Scores more.' },
+  },
   year: 2027,
   slots: 1400,            // miner positions at the site
   startMiners: 700,       // inherited from the previous manager
@@ -13,6 +30,8 @@ DATA.config = {
   eventChance: 0.24,      // chance of a random event per day, before modifiers
   baseFailRate: 0.0007,   // part failures per online miner per day
   dayMs: 700,             // real-time length of one trail day
+  fastForward: 4,         // speed-up when the player presses F on the trail
+  dayNightDays: 8,        // trail days per full day/night cycle in the scenery
 
   // Network difficulty retargets every `days` days by a random percent in
   // `change`. It mostly goes up, so a slow trip faces a harder network.

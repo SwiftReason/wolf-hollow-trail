@@ -4,9 +4,14 @@
 
 const Sound = {
   ctx: null,
-  musicOn: Persist.get('wht.music', Persist.get('wht.sound', true)),
-  sfxOn: Persist.get('wht.sfx', Persist.get('wht.sound', true)),
+  // Volumes 0-10. Older versions stored on/off switches; honor those.
+  musicVol: Persist.get('wht.musicVol', Persist.get('wht.music', Persist.get('wht.sound', true)) ? 7 : 0),
+  sfxVol: Persist.get('wht.sfxVol', Persist.get('wht.sfx', Persist.get('wht.sound', true)) ? 7 : 0),
+  get musicOn() { return Sound.musicVol > 0; },
+  get sfxOn() { return Sound.sfxVol > 0; },
   get on() { return Sound.musicOn || Sound.sfxOn; },
+  musicGain() { return Sound.musicVol / 10 * 0.7; },
+  sfxGain() { return Sound.sfxVol / 10; },
 
   init() {
     if (Sound.ctx) { if (Sound.ctx.state === 'suspended') Sound.ctx.resume(); return; }
@@ -21,13 +26,13 @@ const Sound = {
     Sound.master = Sound.gain(0.85, Sound.comp);
 
     // Music gets a little hall reverb, like an SNES echo buffer.
-    Sound.musicBus = Sound.gain(Sound.musicOn ? 0.5 : 0, Sound.master);
+    Sound.musicBus = Sound.gain(Sound.musicGain(), Sound.master);
     Sound.verb = c.createConvolver();
     Sound.verb.buffer = Sound.impulse(1.6);
     Sound.verbSend = Sound.gain(0.22, Sound.verb);
     Sound.musicBus.connect(Sound.verbSend);
     Sound.verb.connect(Sound.master);
-    Sound.sfxBus = Sound.gain(Sound.sfxOn ? 0.7 : 0, Sound.master);
+    Sound.sfxBus = Sound.gain(Sound.sfxGain(), Sound.master);
 
     Sound.noise = Sound.noiseBuffer(2);
     Sound.pulse25 = Sound.pulseWave(0.25);
@@ -279,18 +284,20 @@ const Sound = {
   win() { Sound.arrive(); },
 
   // ------------------------------------------------------------- settings
-  setMusic(on) {
-    Sound.musicOn = on;
-    Persist.set('wht.music', on);
-    if (Sound.ctx) Sound.musicBus.gain.setTargetAtTime(on ? 0.5 : 0, Sound.ctx.currentTime, 0.1);
-    if (on) Music.resume();
+  setMusicVol(v) {
+    Sound.musicVol = U.clamp(Math.round(v), 0, 10);
+    Persist.set('wht.musicVol', Sound.musicVol);
+    if (Sound.ctx) Sound.musicBus.gain.setTargetAtTime(Sound.musicGain(), Sound.ctx.currentTime, 0.1);
+    if (Sound.musicOn) Music.resume();
     else { clearInterval(Music.timer); Music.timer = null; }
   },
-  setSfx(on) {
-    Sound.sfxOn = on;
-    Persist.set('wht.sfx', on);
-    if (Sound.ctx) Sound.sfxBus.gain.setTargetAtTime(on ? 0.7 : 0, Sound.ctx.currentTime, 0.1);
+  setSfxVol(v) {
+    Sound.sfxVol = U.clamp(Math.round(v), 0, 10);
+    Persist.set('wht.sfxVol', Sound.sfxVol);
+    if (Sound.ctx) Sound.sfxBus.gain.setTargetAtTime(Sound.sfxGain(), Sound.ctx.currentTime, 0.1);
   },
+  setMusic(on) { Sound.setMusicVol(on ? 7 : 0); },
+  setSfx(on) { Sound.setSfxVol(on ? 7 : 0); },
 };
 
 // ------------------------------------------------------------------ music

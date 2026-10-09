@@ -15,7 +15,8 @@ const Death = {
     const ep = await UI.ask(UI.hi(UI.center(`HERE LIES ${c.name.toUpperCase()}`)) + '\n\n' +
       UI.t(`Write an epitaph for ${c.name}.`) + '\n', '>', { max: 40, allowEmpty: true });
     c.epitaph = ep;
-    Graves.add({ game: G.id, name: c.name, cause: c.cause, epitaph: ep, block: c.diedAt, date: c.diedOn });
+    Journal.add(G, c.cause + (ep ? ` Epitaph: "${ep}"` : ''));
+    Graves.add({ game: G.id, name: c.name, cause: c.cause, epitaph: ep, frac: c.diedAt / Q.total(G), date: c.diedOn });
     Scene.show('tomb', { ...stone, epitaph: ep });
     await UI.pause(UI.t(c.cause));
     Scene.restore(prev);
@@ -31,10 +32,11 @@ const Death = {
   },
 
   async gameOver(G) {
-    Save.clear();
+    Save.clear(G);
     Sound.death();
     Scene.setMoving(false);
     Scene.show('gameover');
+    Journal.add(G, Q.alive(G).length ? 'Hashrate hit zero. Wolf Hollow went dark.' : 'The last of the crew is gone.');
     Music.play('gameover');
     const everyone = !Q.alive(G).length;
     const why = everyone
@@ -45,10 +47,11 @@ const Death = {
       '',
       UI.t(why),
       '',
-      UI.kv('Blocks mined', `${U.num(Math.floor(G.blocks))} / ${U.num(DATA.config.totalBlocks)}`),
+      UI.kv('Blocks mined', `${U.num(Math.floor(G.blocks))} / ${U.num(Q.total(G))}`),
       UI.kv('Days', U.num(G.day)),
       UI.kv('Deaths', U.num(G.stats.deaths)),
     ].join('\n'));
+    await Score.after(G, false);
     return 'dead';
   },
 };

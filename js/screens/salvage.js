@@ -70,6 +70,7 @@ const Salvage = {
     const fixedFleet = Sim.repair(G);
     if (fixedFleet) lines.push(`Your crew put ${U.plural(fixedFleet, 'broken miner')} back online.`);
     (hb + psu) ? Sound.good() : Sound.bad();
+    Journal.add(G, 'Salvaged the RMA pile. ' + lines.join(' '));
     await UI.pause(head + '\n' + lines.map(UI.t).join('\n\n'));
 
     // Salvage takes the day.

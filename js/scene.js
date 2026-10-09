@@ -41,8 +41,14 @@ const Scene = {
 
   show(scene, params = {}) { Scene.view = { mode: 'place', scene, ...params }; Scene.custom = null; },
   trail(G) { Scene.view = { mode: 'trail', G }; Scene.custom = null; },
-  setMoving(on) { Scene.moving = on; },
+  // speed: how fast the scenery scrolls (fast-forward passes its multiplier).
+  setMoving(on, speed = 1) { Scene.moving = on; Scene.speed = speed; },
+  speed: 1,
   run(fn) { Scene.custom = fn; },
+  // An event picture drawn over whatever is showing (null to clear).
+  overlay: null,
+  overlayAt: 0,
+  setOverlay(pic) { Scene.overlay = pic; Scene.overlayAt = Scene.t; },
   save() { return { view: Scene.view, custom: Scene.custom }; },
   restore(s) { Scene.view = s.view; Scene.custom = s.custom; },
 
@@ -50,12 +56,18 @@ const Scene = {
     const dt = Math.min(0.1, Math.max(0, (now - Scene.last) / 1000));
     Scene.last = now;
     Scene.t += dt;
-    if (Scene.moving) Scene.scroll += dt * 34;
+    const v = Scene.view, C = DATA.config;
+    if (Scene.moving) {
+      Scene.scroll += dt * 34 * Scene.speed;
+      // Time of day turns over every few trail days while you drive.
+      if (v.mode === 'trail' && v.G) v.G.tod = ((v.G.tod || 0.25) + dt * Scene.speed / (C.dayNightDays * C.dayMs / 1000)) % 1;
+    }
     const ctx = Scene.ctx;
     try {
       if (Scene.custom) Scene.custom(ctx, dt, Scene.t);
-      else if (Scene.view.mode === 'trail') Trail.draw(ctx, Scene.t, { G: Scene.view.G, scroll: Scene.scroll, moving: Scene.moving });
-      else Places.draw(ctx, Scene.t, Scene.view);
+      else if (v.mode === 'trail') Trail.draw(ctx, Scene.t, { G: v.G, scroll: Scene.scroll, moving: Scene.moving });
+      else Places.draw(ctx, Scene.t, v);
+      if (Scene.overlay && !Scene.custom) Vignettes.draw(ctx, Scene.t - Scene.overlayAt, Scene.overlay);
     } catch (e) {
       console.error(e);
     }
@@ -114,7 +126,7 @@ const Hud = {
       ['Food', `${U.num(G.s.food)} rations`],
       ['Hashrate', `${Q.hashrate(G).toFixed(1)} PH/s`],
       ['Difficulty', Q.difficulty(G)],
-      ['Blocks', `${U.num(Math.floor(G.blocks))} / ${U.num(DATA.config.totalBlocks)}`],
+      ['Blocks', `${U.num(Math.floor(G.blocks))} / ${U.num(Q.total(G))}`],
       ['Sats', U.num(G.sats)],
     ];
     const html = items.map(([k, v]) => `<div><span>${k}</span><b>${U.esc(v)}</b></div>`).join('');
