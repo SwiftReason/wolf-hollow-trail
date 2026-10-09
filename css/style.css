@@ -121,7 +121,17 @@ body {
 .hi  { color: var(--hi); }
 .dim { color: var(--dim); }
 
-.opt { cursor: pointer; border-radius: 3px; }
+/* Clickable text. As an inline-block the hover box is exactly one line tall
+   (an inline box takes DotGothic16's tall ascent and rides up over the line
+   above). The padding and matching negative margins widen it a little and
+   drop the bottom edge to center the letters without moving any text. */
+.opt {
+  display: inline-block;
+  padding: 0 0.3ch 0.1em;
+  margin: 0 -0.3ch -0.1em;
+  cursor: pointer;
+  border-radius: 3px;
+}
 .opt:hover { background: var(--hi); color: var(--ink); text-shadow: none; }
 
 .blink { animation: blink 1s steps(1) infinite; }

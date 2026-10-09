@@ -14,8 +14,8 @@ const Travel = {
       next ? UI.esc(`${U.num(Math.ceil(next.block - G.blocks))} blocks to go.`) : '',
       UI.dim(UI.esc(`${C.zones[G.zone].label}  /  ${C.tuning[G.tuning].label}  /  ${C.shifts[G.shift].label}`)),
       '',
-      `<span class="opt">${UI.center('Press ENTER to size up the situation')}</span>`,
-      `<span class="opt" data-k="F">${UI.dim(UI.center(G.fast ? 'Fast-forward is on. F to slow down.' : 'Press F to fast-forward.'))}</span>`,
+      UI.tap(UI.center('Press ENTER to size up the situation')),
+      UI.tap(UI.center(G.fast ? 'Fast-forward is on. F to slow down.' : 'Press F to fast-forward.'), 'F', 'dim'),
     ].join('\n'));
   },
 

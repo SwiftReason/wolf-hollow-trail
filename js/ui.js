@@ -58,9 +58,15 @@ const UI = (() => {
   const rule = () => '-'.repeat(W);
   const center = s => esc(U.center(s, W));
   const kv = (k, v, n = 14) => esc(U.padR(k + ':', n) + v);
+  // Clickable text (already escaped). Padding spaces stay outside the span so
+  // the hover highlight hugs the words.
+  const tap = (text, k, cls = '') => {
+    const [, lead, body, tail] = text.match(/^( *)([\s\S]*?)( *)$/);
+    return `${lead}<span class="opt${cls && ' ' + cls}"${k ? ` data-k="${esc(k)}"` : ''}>${body}</span>${tail}`;
+  };
   const opt = (k, label, disabled) => disabled
     ? dim(`  ${esc(k)}. ${esc(label)}`)
-    : `<span class="opt" data-k="${esc(k)}">  ${esc(k)}. ${esc(label)}</span>`;
+    : tap(`  ${esc(k)}. ${esc(label)}`, k);
   const cursor = '<span class="blink">_</span>';
 
   // ---- prompts ----
@@ -70,13 +76,13 @@ const UI = (() => {
   }
 
   function pause(body, prompt = 'Press SPACE BAR to continue') {
-    draw(body + '\n\n' + `<span class="opt">${center(prompt)}</span>`);
+    draw(body + '\n\n' + tap(center(prompt)));
     return waitKeys([], true);
   }
 
   async function yesNo(body, prompt) {
     draw(body + '\n\n' + esc(prompt) + ' ' +
-      `<span class="opt" data-k="Y">Y</span>/<span class="opt" data-k="N">N</span> ` + cursor);
+      tap('Y', 'Y') + '/' + tap('N', 'N') + ' ' + cursor);
     return (await waitKeys(['Y', 'N'])) === 'Y';
   }
 
@@ -116,5 +122,5 @@ const UI = (() => {
     });
   }
 
-  return { W, draw, waitKeys, cancel, menu, pause, yesNo, ask, t, hi, dim, rule, center, kv, esc, opt, cursor };
+  return { W, draw, waitKeys, cancel, menu, pause, yesNo, ask, t, hi, dim, rule, center, kv, esc, opt, tap, cursor };
 })();
