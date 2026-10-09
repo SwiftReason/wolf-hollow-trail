@@ -37,7 +37,8 @@ const Engine = {
 
   roll(G) {
     const C = DATA.config;
-    const p = C.eventChance * C.tuning[G.tuning].events * C.shifts[G.shift].events * Q.diff(G).events;
+    // Longer trips get fewer events per day (total grows with the square root of length).
+    const p = C.eventChance * C.tuning[G.tuning].events * C.shifts[G.shift].events * Q.diff(G).events / Math.sqrt(Q.scale(G));
     if (!U.chance(p)) return null;
     const x = Engine.ctx(G);
     const ev = U.weighted(DATA.events, e => Engine.weight(G, e, x));

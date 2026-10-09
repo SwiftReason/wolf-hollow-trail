@@ -99,7 +99,8 @@ function newGame({ role, names, roles, month, length = 'normal', diff = 'normal'
       name, role: roles[i], health: 100, alive: true, ailments: [],
       cause: null, escalated: false, epitaph: '',
     })),
-    sats: Math.round(Q.role(role).sats * C.difficulties[diff].sats / 1000) * 1000,
+    // Corporate budgets for the trip: longer trips start with more sats.
+    sats: Math.round(Q.role(role).sats * C.difficulties[diff].sats * (0.4 + 0.6 * C.lengths[length].blocks / C.totalBlocks) / 1000) * 1000,
     s: Object.fromEntries(Object.keys(DATA.supplies).map(k => [k, 0])),
     fleet: { online: C.startMiners, broken: { hashboards: 0, psus: 0, fans: 0, boards: 0 } },
     tuning: 'stock', shift: 10,

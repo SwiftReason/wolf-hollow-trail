@@ -17,7 +17,7 @@ DATA.config = {
       desc: 'Fewer disasters, cheaper parts, more sats. Scores less.' },
     normal:    { label: 'Normal',    events: 1,   fatal: 1,   fail: 1,    prices: 1,    sats: 1,    score: 1,
       desc: 'Texas, as advertised.' },
-    grizzled:  { label: 'Grizzled',  events: 1.2, fatal: 1.6, fail: 1.3,  prices: 1.2,  sats: 0.85, score: 1.5,
+    grizzled:  { label: 'Grizzled',  events: 1.15, fatal: 1.35, fail: 1.3, prices: 1.2, sats: 0.85, score: 1.5,
       desc: 'More of everything that goes wrong. Scores more.' },
   },
   year: 2027,

@@ -47,8 +47,9 @@ const Sim = {
     const w = G.weather = Sim.rollWeather(G);
 
     // The network retargets on its own schedule, whether you're moving or not.
+    // Steps scale with trip length so every length climbs about the same.
     if (G.day % C.retarget.days === 0) {
-      G.difficulty *= 1 + U.ri(C.retarget.change[0], C.retarget.change[1]) / 100;
+      G.difficulty *= 1 + U.ri(C.retarget.change[0], C.retarget.change[1]) / 100 / Q.scale(G);
     }
 
     // Progress, stopping at the next landmark.
