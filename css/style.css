@@ -1,0 +1,118 @@
+/* 16-bit look: a pixel-art scene on top, an SNES-style text window below. */
+:root {
+  --game-w: 640px;                 /* set by Scene.layout() */
+  --bg: #0c1020;
+  --win-top: #2b4c92;
+  --win-bot: #0f1a3c;
+  --text: #f4ecd8;
+  --hi: #ffd25a;
+  --dim: #8e9ac2;
+  --edge: #e8eaf4;
+  --ink: #0a0e1c;
+  /* 40 columns of Workbench (0.5em wide) across the window's inner width */
+  --fs: calc((var(--game-w) - 34px) / 20);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(ellipse at top, #1c2440 0%, var(--bg) 70%);
+  background-color: var(--bg);
+}
+
+body {
+  color: var(--text);
+  font-family: 'Workbench', ui-monospace, 'Courier New', monospace;
+  display: flex;
+  justify-content: center;
+  padding: 12px 12px 32px;
+}
+
+#game {
+  width: var(--game-w);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Wide screens: picture and status on the left, text on the right. */
+#game.side {
+  width: calc(var(--game-w) * 2 + 16px);
+  display: grid;
+  grid-template-columns: var(--game-w) var(--game-w);
+  grid-template-rows: auto auto 1fr;
+  column-gap: 16px;
+  row-gap: 8px;
+  align-items: start;
+}
+#game.side #scene  { grid-column: 1; grid-row: 1; }
+#game.side #hud    { grid-column: 1; grid-row: 2; }
+#game.side #screen { grid-column: 2; grid-row: 1 / span 3; }
+
+#scene {
+  display: block;
+  width: var(--game-w);
+  height: calc(var(--game-w) / 2);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px var(--ink), 0 0 0 5px #3a4a78, 0 8px 24px rgba(0, 0, 0, 0.5);
+  touch-action: none;
+}
+
+/* Status bar */
+#hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px 10px;
+  padding: 6px 12px;
+  font-size: calc(var(--fs) * 0.58);
+  line-height: 1.15;
+  background: linear-gradient(#1d2c54, #121b38);
+  border: 2px solid #4a5e98;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+#hud[hidden] { display: none; }
+#hud div { display: flex; flex-direction: column; min-width: 0; }
+#hud span { color: var(--dim); font-size: 0.85em; }
+#hud b { font-weight: normal; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The text window */
+.window {
+  font-size: var(--fs);
+  line-height: 1.2;
+  white-space: pre;
+  min-height: calc(var(--fs) * 1.2 * 8 + 28px);
+  padding: 12px 14px;
+  background: linear-gradient(var(--win-top), var(--win-bot));
+  border: 3px solid var(--edge);
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px var(--ink), inset 0 0 0 2px #5a7ac8, 0 8px 24px rgba(0, 0, 0, 0.45);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  overflow-x: hidden;
+}
+
+.hi  { color: var(--hi); }
+.dim { color: var(--dim); }
+
+.opt { cursor: pointer; border-radius: 3px; }
+.opt:hover { background: var(--hi); color: var(--ink); text-shadow: none; }
+
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+input.tin {
+  background: rgba(0, 0, 0, 0.25);
+  border: 0;
+  border-bottom: 2px solid var(--hi);
+  outline: 0;
+  padding: 0 2px;
+  color: var(--text);
+  font: inherit;
+  text-shadow: inherit;
+  caret-color: var(--hi);
+}

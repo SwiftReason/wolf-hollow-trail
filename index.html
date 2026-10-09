@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wolf Hollow Trail</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Workbench&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main id="game">
+    <canvas id="scene" width="320" height="160" aria-label="Scene"></canvas>
+    <div id="hud" hidden></div>
+    <div id="screen" class="window" aria-live="polite"></div>
+  </main>
+
+  <!-- Content: edit these to add events, landmarks, items, roles. -->
+  <script src="data/config.js"></script>
+  <script src="data/roles.js"></script>
+  <script src="data/store.js"></script>
+  <script src="data/weather.js"></script>
+  <script src="data/deaths.js"></script>
+  <script src="data/events.js"></script>
+  <script src="data/landmarks.js"></script>
+  <script src="data/crossings.js"></script>
+  <script src="data/salvage.js"></script>
+  <script src="data/music.js"></script>
+
+  <!-- Logic -->
+  <script src="js/util.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/decisions.js"></script>
+
+  <!-- Graphics -->
+  <script src="js/gfx.js"></script>
+  <script src="js/paint/sprites.js"></script>
+  <script src="js/paint/trail.js"></script>
+  <script src="js/paint/places.js"></script>
+  <script src="js/scene.js"></script>
+
+  <!-- Screens -->
+  <script src="js/ui.js"></script>
+  <script src="js/screens/title.js"></script>
+  <script src="js/screens/setup.js"></script>
+  <script src="js/screens/store.js"></script>
+  <script src="js/screens/travel.js"></script>
+  <script src="js/screens/landmark.js"></script>
+  <script src="js/screens/crossing.js"></script>
+  <script src="js/screens/salvage.js"></script>
+  <script src="js/screens/death.js"></script>
+  <script src="js/screens/score.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
