@@ -21,8 +21,8 @@ DATA.config = {
       desc: 'More of everything that goes wrong. Scores more.' },
   },
   year: 2027,
-  slots: 1400,            // miner positions at the site
-  startMiners: 700,       // inherited from the previous manager
+  slots: 3125,            // miner positions at the site (the 3.125 BTC block reward)
+  startMiners: 1562,      // inherited from the previous manager (1.5625 BTC, the reward after The Halving)
   thPerMiner: 186,        // TH/s per Whatsminer at stock
   baseBlocksPerDay: 20,   // full fleet, stock tuning, 10 hr shifts, healthy crew
   rationsPerPerson: 3,
@@ -78,8 +78,8 @@ DATA.config = {
   score: {
     health: { good: 500, fair: 400, poor: 300, 'very poor': 200 },
     site: 50,
-    minersPerPoint: 2,
-    perPart: 2,
+    minersPerPoint: 4.5,
+    perPart: 1,
     perKit: 2,
     rationsPerPoint: 25,
     tiesPerPoint: 50,

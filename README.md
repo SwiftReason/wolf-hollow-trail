@@ -1,7 +1,7 @@
 # Wolf Hollow Trail
 
 A bitcoin-mining parody of *The Oregon Trail* (1985). You lead a crew of five
-across a 1,400-Whatsminer site in Granbury, Texas, from Wolf Hollow to The
+across a 3,125-Whatsminer site in Granbury, Texas, from Wolf Hollow to The
 Halving. Along the way you cross the air, immersion and hydro cooling zones,
 ride out ERCOT peaks and Texas weather, and try to mine every block before
 the difficulty adjustment catches up with you. People will die of dysentery.

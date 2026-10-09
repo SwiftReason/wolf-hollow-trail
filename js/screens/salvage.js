@@ -25,7 +25,7 @@ const Salvage = {
     Scene.run((ctx, dt, t) => Salvage.drawIdle(ctx, t));
     await UI.pause(head + '\n' + UI.t(S.intro) + '\n\n' +
       (recent ? UI.hi(UI.t(S.pickedOverText)) + '\n\n' : '') +
-      UI.t(`You can carry ${carry} parts. Each grab uses ${S.tieCost} zip ties. You have ${U.num(G.s.zipties)}.`) + '\n\n' +
+      UI.t(`You can carry ${carry} parts. Each grab gets ${S.perGrab} and uses ${S.tieCost} zip ties. You have ${U.num(G.s.zipties)}.`) + '\n\n' +
       UI.t(S.controls), 'Press SPACE BAR to start');
 
     const res = await Salvage.play(G, good);
@@ -173,11 +173,11 @@ const Salvage = {
         G.s.zipties -= S.tieCost;
         Sound.clank();
         if (p.ok) {
-          res.got[p.type]++;
+          res.got[p.type] += S.perGrab;
           Sound.notes('lead', ['C6', 'G6'], 0.05, 0.5);
-          float('+1', p.x, LANES[p.lane] - 24);
+          float('+' + S.perGrab, p.x, LANES[p.lane] - 24);
         } else {
-          res.dead[p.type]++;
+          res.dead[p.type] += S.perGrab;
           Sound.bad();
           float('DEAD', p.x, LANES[p.lane] - 24);
           if (p.type === 'psus' && U.chance(S.zapChance)) {

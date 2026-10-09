@@ -85,15 +85,15 @@ function shop(G, lm, first) {
     if (L[i].zone) zone = L[i].zone;
     at = b;
   }
-  if (first && !hoard) buy(G, 'miners', Math.floor((G.sats - 3500000) / 400000 * 0.6), lm);
+  if (first && !hoard) buy(G, 'miners', Math.floor((G.sats - 3500000) / DATA.store.items.miners.price * 0.6), lm);
   const alive = Q.alive(G).length;
   topUp(G, 'food', alive * C.rationsPerPerson * days(Q.landmark(G, nextIdx).block - G.blocks), lm);
   topUp(G, 'ppe', alive, lm);
   topUp(G, 'zipties', 150 + need.zipties, lm);
   topUp(G, 'dielectric', need.dielectric, lm);
   topUp(G, 'glycol', need.glycol, lm);
-  for (const [k, t] of [['hashboards', 12], ['psus', 8], ['fans', G.zone === 'air' ? 6 : 0], ['boards', 4], ['hoses', 3]]) topUp(G, k, t, lm);
-  if (!reckless && !hoard) buy(G, 'miners', Math.floor((G.sats - 2000000) / 400000 * 0.5), lm);
+  for (const [k, t] of [['hashboards', 27], ['psus', 18], ['fans', G.zone === 'air' ? 13 : 0], ['boards', 9], ['hoses', 3]]) topUp(G, k, t, lm);
+  if (!reckless && !hoard) buy(G, 'miners', Math.floor((G.sats - 2000000) / DATA.store.items.miners.price * 0.5), lm);
   Sim.repair(G);
 }
 
@@ -147,7 +147,7 @@ function salvage(G) {
   const recent = G.salvages.filter(b => G.blocks - b < S.recentBlocks).length;
   const good = Math.max(0.2, S.goodRatio - S.pickedOver * recent);
   const grabs = Math.min(U.ri(10, 18), Math.floor(G.s.zipties / S.tieCost));
-  const got = Math.min(Math.round(S.carry * Q.perk(G, 'salvage')), Math.round(grabs * good));
+  const got = Math.min(Math.round(S.carry * Q.perk(G, 'salvage')), Math.round(grabs * good) * S.perGrab);
   G.s.zipties -= grabs * S.tieCost;
   const hb = Math.round(got * 0.55);
   G.s.hashboards += hb;
@@ -170,7 +170,7 @@ function play(role, month) {
     if (smart) G.tuning = G.zone === 'air' && G.weather.temp >= 90 ? 'stock' : 'overclocked';
     const r = runDay(G, {}, st);
     if (!reckless && Q.avgHealth(G) < 45) for (let d = 0; d < 3; d++) runDay(G, { rest: true }, st);
-    if (!Q.over(G) && G.s.hashboards + G.s.psus < 4 && G.s.zipties >= 40 &&
+    if (!Q.over(G) && G.s.hashboards + G.s.psus < 9 && G.s.zipties >= 40 &&
         !(G.salvages || []).some(b => G.blocks - b < DATA.salvage.recentBlocks)) {
       salvage(G); st.salvages++; runDay(G, { noProgress: true, noEvents: true }, st);
     }

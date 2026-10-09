@@ -9,7 +9,7 @@ DATA.landmarks = [
   {
     id: 'wolf_hollow', name: 'Wolf Hollow', mapKey: 'W', block: 0, type: 'start', zone: 'air',
     store: true, priceMult: 1,
-    desc: '1,400 Whatsminers on a caliche pad outside Granbury, Texas. The wolves left. The hum stayed.',
+    desc: '3,125 Whatsminers on a caliche pad outside Granbury, Texas. The wolves left. The hum stayed.',
     talk: [
       'Dusty, a night-shift tech, tells you: "Change the filters. Nobody changes the filters."',
       'A man in a hard hat says: "The last manager made it to the Substation. We do not talk about the last manager."',

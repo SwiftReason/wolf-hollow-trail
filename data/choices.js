@@ -14,12 +14,12 @@ window.DATA = window.DATA || {};
 
 DATA.events.push(
   { id: 'used_miners', type: 'choice', weight: 0.8, pic: 'truck',
-    text: 'A guy in a lifted truck offers 40 used Whatsminers for 500,000 sats. No warranty. He will not say where they came from.',
+    text: 'A guy in a lifted truck offers 90 used Whatsminers for 500,000 sats. No warranty. He will not say where they came from.',
     choices: [
       { label: 'Buy them (500,000 sats)', requires: { sats: 500000 }, effect: { sats: -500000 },
         odds: 0.6, roleBonus: { tech: 0.1 },
-        win: { text: 'They mostly work. 34 more miners online.', effect: { miners: 34 } },
-        lose: { text: 'They were in a flood. 9 of them boot.', effect: { miners: 9 } } },
+        win: { text: 'They mostly work. 76 more miners online.', effect: { miners: 76 } },
+        lose: { text: 'They were in a flood. 20 of them boot.', effect: { miners: 20 } } },
       { label: 'Pass', text: 'He drives off. Something rattles in the bed.' },
     ] },
 
@@ -47,7 +47,7 @@ DATA.events.push(
       { label: 'Throttle the fleet for two days', effect: { days: 2 }, text: 'You throttled until it broke. Nothing melted.', good: true },
       { label: 'Run it hot', odds: 0.5, roleBonus: { maintenance: 0.15 },
         win: { text: 'The fleet held. Barely. The fans sounded like a jet.', effect: {} },
-        lose: { text: 'The hot aisle won. 35 miners cooked.', effect: { broken: { hashboards: 35 } } } },
+        lose: { text: 'The hot aisle won. 80 miners cooked.', effect: { broken: { hashboards: 80 } } } },
     ] },
 
   { id: 'breakfast', type: 'choice', weight: 0.8, pic: 'tacos',
@@ -64,7 +64,7 @@ DATA.events.push(
     choices: [
       { label: 'Let him film', effect: { sats: 200000 }, odds: 0.7,
         win: { text: 'The video has 1.2 million views. You are in the thumbnail, pointing at a fan.', effect: {} },
-        lose: { text: 'He touched a live PDU on camera. He is fine. Eight PSUs are not.', effect: { broken: { psus: 8 } } } },
+        lose: { text: 'He touched a live PDU on camera. He is fine. Eighteen PSUs are not.', effect: { broken: { psus: 18 } } } },
       { label: 'No cameras', text: 'He films the fence from the road instead. It gets more views.' },
     ] },
 
@@ -81,7 +81,7 @@ DATA.events.push(
     choices: [
       { label: 'Flash the fleet', odds: 0.4, roleBonus: { electrician: 0.12, tech: 0.12 },
         win: { text: 'It worked. Blocks are coming easier. Nobody touch anything.', effect: { difficulty: -0.05 } },
-        lose: { text: 'It bricked 40 control boards. The Discord has been deleted.', effect: { broken: { boards: 40 } } } },
+        lose: { text: 'It bricked 90 control boards. The Discord has been deleted.', effect: { broken: { boards: 90 } } } },
       { label: 'Stick with stock firmware', text: 'The forum post was taken down the next day. Good call.', good: true },
     ] },
 
@@ -111,8 +111,8 @@ DATA.events.push(
     choices: [
       { label: 'Bid on it (120,000 sats)', requires: { sats: 120000 }, effect: { sats: -120000 },
         odds: 0.55, roleBonus: { inventory: 0.15 },
-        win: { text: 'Ten working PSUs. Inventory logged them. Twice.', effect: { supplies: { psus: 10 } } },
-        lose: { text: 'Two of them work. The rest are very heavy paperweights.', effect: { supplies: { psus: 2 } } } },
+        win: { text: 'Twenty-two working PSUs. Inventory logged them. Twice.', effect: { supplies: { psus: 22 } } },
+        lose: { text: 'Four of them work. The rest are very heavy paperweights.', effect: { supplies: { psus: 4 } } } },
       { label: 'Pass', text: 'Someone from the next site over won it. They look happy. Suspiciously happy.' },
     ] },
 );

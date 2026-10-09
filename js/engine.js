@@ -69,7 +69,7 @@ const Engine = {
     if (ev.choices) return false;
     if (ev.type === 'fatal') return true;
     if (!Engine.canConsume(G, ev)) return true;
-    if (ev.type === 'fleet' && !ev.consume && Array.isArray(ev.n) && ev.n[1] >= 25) return true;
+    if (ev.type === 'fleet' && !ev.consume && Array.isArray(ev.n) && ev.n[1] >= 55) return true;
     return (ev.effect && ev.effect.days >= 3) || ev.id === 'corporate_visit';
   },
 

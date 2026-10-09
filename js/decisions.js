@@ -113,7 +113,7 @@ const Decide = {
       out.lines.push(E.not4cp);
     }
     if (U.chance((ch.inSeason ? 0.35 : 0.1) / odds)) {
-      const n = Math.min(G.fleet.online, U.ri(10, 30));
+      const n = Math.min(G.fleet.online, U.ri(20, 65));
       G.fleet.online -= n;
       G.fleet.broken.psus += n;
       out.lines.push(U.tmpl(E.brownout, { n }));

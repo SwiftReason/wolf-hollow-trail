@@ -39,6 +39,6 @@ DATA.roles = [
     sats: 5000000, mult: 3,
     lost: 'You no longer have a Miner Technician.',
     perk: 'Repairs hashboards instead of replacing them. Bonus in RMA Pile Salvage.',
-    perks: { hbRepairFail: 0.5, benchRepair: 2, salvage: 1.25 },
+    perks: { hbRepairFail: 0.5, benchRepair: 4.5, salvage: 1.25 },
   },
 ];

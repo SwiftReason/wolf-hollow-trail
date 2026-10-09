@@ -4,7 +4,8 @@ window.DATA = window.DATA || {};
 
 DATA.salvage = {
   seconds: 30,
-  carry: 10,             // base parts you can haul back (Miner Techs raise it)
+  carry: 22,             // base parts you can haul back (Miner Techs raise it)
+  perGrab: 2,            // parts per grab: the pile is zip-tied in pairs
   tieCost: 2,            // zip ties used to tag each grabbed part
   minTies: 10,           // won't start below this
   goodRatio: 0.6,        // share of good parts on a fresh pile
@@ -22,7 +23,7 @@ DATA.salvage = {
     psus:       { label: 'PSU' },
   },
 
-  intro: 'The RMA pile is a mountain of parts nobody logged. Some still work. Grab the good ones off the conveyor before they go to the scrapper.',
+  intro: 'The RMA pile is a mountain of parts nobody logged, zip-tied in pairs. Some still work. Grab the good ones off the conveyor before they go to the scrapper.',
   controls: 'UP/DOWN to move the claw. SPACE to grab. Or tap a lane. ENTER to stop.',
   noTies: 'You have no zip ties to tag parts with. Inventory will not accept untagged parts.',
   pickedOverText: 'The pile has been picked over recently.',

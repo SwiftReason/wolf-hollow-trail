@@ -3,7 +3,7 @@
 const Title = {
   head() {
     return [
-      UI.dim(UI.center('1,400 miners. 2,016 blocks. One crew.')),
+      UI.dim(UI.center('3,125 miners. 2,016 blocks. One crew.')),
       '',
       'You may:',
     ].join('\n');
@@ -113,7 +113,7 @@ const Title = {
 
   async learn() {
     const pages = [
-      'Try taking a journey across Wolf Hollow, a bitcoin mining site outside Granbury, Texas, with 1,400 Whatsminers and a crew of five.\n\nYour goal is to keep the site alive for 2,016 blocks, until The Halving. Blocks mined is distance. Hashrate is speed.',
+      'Try taking a journey across Wolf Hollow, a bitcoin mining site outside Granbury, Texas, with 3,125 Whatsminers and a crew of five.\n\nYour goal is to keep the site alive for 2,016 blocks, until The Halving. Blocks mined is distance. Hashrate is speed.',
       'First you choose a job. A Site Manager starts with the most sats. A Miner Technician starts with the fewest, but scores triple.\n\nYour crew\'s jobs matter. Their perks only work while they are alive.',
       'TUNING: overclocked miners go faster, break more often, and sometimes burn out for good. Worst in the hot aisle. Underclocked miners are slow and stay cool.\n\nSHIFT LENGTH: 12-hour shifts mine more blocks. They also break people.',
       'DIFFICULTY: every two weeks the network retargets. It usually goes up. The longer you take, the harder each block gets.\n\nCorporate projects 300 days to The Halving. Every day you beat it is worth points.',

@@ -91,7 +91,7 @@ const Q = {
 function newGame({ role, names, roles, month, length = 'normal', diff = 'normal', slot = 1 }) {
   const C = DATA.config;
   const G = {
-    v: 2,
+    v: 3,
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     slot, length, diff, total: C.lengths[length].blocks,
     role, year: C.year, month, day: 0,
@@ -141,17 +141,26 @@ const Save = {
     if (G) { G.slot = slot; Save.upgrade(G); }
     return G;
   },
-  // Version 1 saves predate The North Forty, which shifted landmark indexes.
   upgrade(G) {
-    if ((G.v || 1) >= 2) return;
-    const old = ['wolf_hollow', 'substation', 'hot_aisle', 'immersion_lake', 'hydro_pass', 'ercot_peak',
-      'difficulty_adj', 'mempool_swamp', 'loading_dock', 'halving'];
-    const byId = id => DATA.landmarks.findIndex(l => l.id === id);
-    if (G.atLandmark != null) G.atLandmark = byId(old[G.atLandmark]);
-    const after = DATA.landmarks.findIndex((l, i) => i > 0 && l.block > G.blocks);
-    G.lm = G.atLandmark != null ? G.atLandmark + 1 : Math.max(1, after);
-    G.journal = G.journal || [];
-    G.v = 2;
+    // Version 1 saves predate The North Forty, which shifted landmark indexes.
+    if ((G.v || 1) < 2) {
+      const old = ['wolf_hollow', 'substation', 'hot_aisle', 'immersion_lake', 'hydro_pass', 'ercot_peak',
+        'difficulty_adj', 'mempool_swamp', 'loading_dock', 'halving'];
+      const byId = id => DATA.landmarks.findIndex(l => l.id === id);
+      if (G.atLandmark != null) G.atLandmark = byId(old[G.atLandmark]);
+      const after = DATA.landmarks.findIndex((l, i) => i > 0 && l.block > G.blocks);
+      G.lm = G.atLandmark != null ? G.atLandmark + 1 : Math.max(1, after);
+      G.journal = G.journal || [];
+    }
+    // Version 2 saves are from the 1,400-miner site. Grow the fleet and the
+    // spare parts to the 3,125-miner site so the trip plays the same.
+    if ((G.v || 1) < 3) {
+      const k = 3125 / 1400, f = G.fleet;
+      f.online = Math.round(f.online * k);
+      for (const p in f.broken) f.broken[p] = Math.round(f.broken[p] * k);
+      for (const p of ['hashboards', 'psus', 'fans', 'boards']) G.s[p] = Math.round(G.s[p] * k);
+    }
+    G.v = 3;
   },
   write(G) { Persist.set(Save.key(G.slot || 1), G); },
   clear(slotOrG) { Persist.del(Save.key(typeof slotOrG === 'object' ? slotOrG.slot || 1 : slotOrG)); },
