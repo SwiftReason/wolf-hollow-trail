@@ -90,6 +90,16 @@ DATA.config = {
     schedule: { days: 300, perDay: 8 },
   },
 
+  // The Hall of Hashers everyone shares: a Google Sheet behind the web app in
+  // tools/scoreboard. Only the copy served from `host` uses it; downloaded
+  // copies, and any time it doesn't answer within `timeoutMs`, keep scores on
+  // this computer only. A blank url turns it off.
+  globalScores: {
+    url: 'https://script.google.com/macros/s/AKfycbyaIQvw4HUFFRyu0nO0PMpPQQhv9vzVSUmPjiTOtYK5ZzVPqq4a4hTGz2mshIAwKinx/exec',
+    host: 'swiftreason.github.io',
+    timeoutMs: 9000,
+  },
+
   ratings: [
     { min: 7000, label: 'Whale' },
     { min: 3500, label: 'Node Runner' },

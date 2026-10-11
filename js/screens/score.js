@@ -54,7 +54,15 @@ const Score = {
     const entry = { name: G.crew[0].name, score: s.total, role: Q.role(G.role).name, id: G.id };
     if (Scores.qualifies(s.total)) Scores.add(entry);
     Journal.add(G, `Reached The Halving after ${G.day} days. Final score: ${U.num(s.total)} (${Scores.rating(s.total)}).`);
-    await Score.hall(G.id);
+
+    // Online, the player can add the score to the board everyone shares.
+    let shared = null;
+    if (Online.enabled() && await UI.yesNo(
+      UI.t(`Post ${G.crew[0].name}'s score to the Hall of Hashers? Everyone who plays online will see it.`) + '\n', 'Post it?')) {
+      UI.draw(UI.t('Sending your score to the Hall of Hashers...') + ' ' + UI.cursor);
+      shared = await Online.submit(G, s.total) || { failed: true };
+    }
+    await Score.hall(G.id, shared);
     await Score.after(G, true);
     return 'won';
   },
@@ -131,15 +139,41 @@ const Score = {
     }
   },
 
-  async hall(highlightId) {
-    const lines = [UI.hi(UI.center('THE HALL OF HASHERS')), UI.rule(),
-      UI.esc(U.padR('Name', 18) + U.padL('Points', 9) + '  Rating'), UI.rule()];
-    for (const e of Scores.all()) {
-      const s = UI.esc(U.padR(e.name, 18) + U.padL(U.num(e.score), 9) + '  ' + Scores.rating(e.score));
-      lines.push(highlightId && e.id === highlightId ? UI.hi(s) : s);
+  // The board everyone shares when the game is online (see js/online.js),
+  // otherwise the scores kept on this computer. `shared` is what the board
+  // sent back after posting a score; leave it out to look the board up.
+  async hall(highlightId, shared) {
+    let note = '';
+    if (shared === undefined && Online.enabled()) {
+      UI.draw(UI.hi(UI.center('THE HALL OF HASHERS')) + '\n\n' + UI.t('Checking the Hall of Hashers...') + ' ' + UI.cursor);
+      shared = await Online.top().then(scores => scores ? { scores } : { failed: true });
     }
-    const legend = DATA.config.ratings.map(r => r.min ? `${r.label} ${U.num(r.min)}+` : r.label).join(', ');
-    lines.push('', UI.dim(UI.t(`Ratings: ${legend}.`)));
-    await UI.pause(lines.join('\n'));
+    if (shared && shared.failed) {
+      note = 'The Hall of Hashers did not answer. These are the scores on this computer.';
+      shared = null;
+    }
+    let everyone = !!shared;
+    while (true) {
+      const list = everyone ? shared.scores : Scores.all();
+      const lines = [UI.hi(UI.center('THE HALL OF HASHERS')), UI.rule(),
+        UI.esc(U.padR('Name', 18) + U.padL('Points', 9) + '  Rating'), UI.rule()];
+      for (const e of list) {
+        const s = UI.esc(U.padR(String(e.name).slice(0, 16), 18) + U.padL(U.num(e.score), 9) + '  ' + Scores.rating(e.score));
+        lines.push(highlightId && e.id === highlightId ? UI.hi(s) : s);
+      }
+      lines.push('');
+      if (everyone && shared.rank > list.length) lines.push(UI.hi(UI.t(`You placed #${U.num(shared.rank)} of ${U.num(shared.of)}.`)));
+      if (shared) lines.push(UI.dim(UI.t(everyone ? 'Everyone who has played online.' : 'Played on this computer.')));
+      if (note) lines.push(UI.dim(UI.t(note)));
+      const legend = DATA.config.ratings.map(r => r.min ? `${r.label} ${U.num(r.min)}+` : r.label).join(', ');
+      lines.push(UI.dim(UI.t(`Ratings: ${legend}.`)));
+      if (!shared) return UI.pause(lines.join('\n'));
+      const k = await UI.menu(lines.join('\n') + '\n', [
+        { k: '1', label: everyone ? 'Show scores on this computer' : 'Show scores from everyone' },
+        { k: '0', label: 'Continue' },
+      ]);
+      if (k === '0') return;
+      everyone = !everyone;
+    }
   },
 };

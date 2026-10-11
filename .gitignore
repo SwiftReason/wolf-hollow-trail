@@ -2,3 +2,6 @@
 Thumbs.db
 .DS_Store
 *.swp
+
+# clasp project pointer for tools/scoreboard (machine-specific)
+.clasp.json

@@ -5,7 +5,7 @@
 const Sound = {
   ctx: null,
   // Volumes 0-10. Older versions stored on/off switches; honor those.
-  musicVol: Persist.get('wht.musicVol', Persist.get('wht.music', Persist.get('wht.sound', true)) ? 7 : 0),
+  musicVol: Persist.get('wht.musicVol', Persist.get('wht.music', Persist.get('wht.sound', true)) ? 4 : 0),
   sfxVol: Persist.get('wht.sfxVol', Persist.get('wht.sfx', Persist.get('wht.sound', true)) ? 7 : 0),
   get musicOn() { return Sound.musicVol > 0; },
   get sfxOn() { return Sound.sfxVol > 0; },
